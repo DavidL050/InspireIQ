@@ -1,17 +1,17 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const db = require('./database');
 
 // Registro de usuarios
-function registerUser(firstName, lastName, birthDate, email, password, role, callback) {
+function registerUser(firstName, lastName, email, password, role, callback) {
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) {
             return callback(err);
         }
 
-        const query = `INSERT INTO users (first_name, last_name, birth_date, email, password, role)
+        const query = `INSERT INTO users (first_name, last_name,email, password, role)
                        VALUES (?, ?, ?, ?, ?, ?)`;
 
-        db.query(query, [firstName, lastName, birthDate, email, hash, role], (err, results) => {
+        db.query(query, [firstName, lastName, email, hash, role], (err, results) => {
             if (err) {
                 return callback(err);
             }

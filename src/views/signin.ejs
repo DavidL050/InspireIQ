@@ -13,6 +13,13 @@
 
     <main class="container mt-5">
         <h2>Iniciar Sesión</h2>
+
+         <% if (successMessage) { %>
+            <div class="alert alert-success" role="alert">
+                <%= successMessage %>
+            </div>
+        <% } %>
+        
         <form action="/signin" method="POST">
             <div class="mb-3">
                 <label for="email" class="form-label">Correo Electrónico</label>

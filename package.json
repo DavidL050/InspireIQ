@@ -4,7 +4,8 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "start": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -12,16 +13,19 @@
   "description": "",
   "dependencies": {
     "-": "^0.0.1",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "bootstrap": "^5.3.3",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "favicon": "^0.0.2",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.3",
     "serve": "^14.2.3",
     "serve-favicon": "^2.5.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.7"
   }
 }
