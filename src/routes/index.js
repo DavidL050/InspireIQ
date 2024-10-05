@@ -29,7 +29,7 @@ router.post("/signup", async (req, res) => {
                 return res.status(500).send('Error en el registro');
             }
             
-            res.redirect('/signin?success=true'); 
+            res.redirect('/home?success=true'); 
         });
     } catch (err) {
         console.error('Error en el proceso de registro:', err);
@@ -58,7 +58,7 @@ router.post("/signin", (req, res) => {
 
             const validPassword = await bcrypt.compare(password, user.password);
             if (validPassword) {
-                res.redirect('/home'); 
+                res.redirect('/course'); 
             } else {
                 res.status(401).send('Credenciales incorrectas');
             }
