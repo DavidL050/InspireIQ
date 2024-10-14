@@ -24,13 +24,6 @@ header {
     height: 40px;
 }
 
-.search-bar input {
-    width: 300px;
-    padding: 8px;
-    border-radius: 20px;
-    border: 1px solid #ccc;
-}
-
 main {
     padding: 20px;
 }
@@ -85,9 +78,15 @@ main {
 .course-meta span:last-child {
     color: #ffbf00;
 }
+
 /* HEADER */
 .navbar {
     padding: 10px 20px;
+}
+
+.navbar-brand-container {
+    display: flex;
+    align-items: center;
 }
 
 .logo {
@@ -96,14 +95,23 @@ main {
     margin-right: 10px;
 }
 
+.navbar-brand {
+    color: white;
+    font-size: 1.5rem;
+}
+
+.search-container {
+    position: relative;
+    width: 40%;
+    max-width: 500px;
+}
+
 .search-bar {
-    max-width: 300px;
+    width: 100%;
     border-radius: 20px;
     border: none;
-    padding-left: 15px;
-    margin-right: 10px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    padding: 8px 15px;
+    padding-right: 40px;
     background-color: #f0f0f0;
 }
 
@@ -111,38 +119,38 @@ main {
     color: #999;
 }
 
+.search-icon-link {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    text-decoration: none;
+}
+
+.search-icon {
+    font-size: 1.5rem;
+}
+
 .nav-link {
     color: white;
     padding: 10px;
-    font-size: 1.5em;
+    font-size: 1rem;
+    transition: color 0.3s ease;
 }
 
 .nav-link:hover {
     color: #ddd;
 }
 
-.d-flex .nav-link {
-    padding: 0 10px;
-}
+/* Responsive adjustments */
+@media (max-width: 991px) {
+    .search-container {
+        width: 100%;
+        margin: 10px 0;
+    }
 
-/* END HEADER */
-
-/* search bar */
-
-.search-container {
-    position: relative;
-    width: 50%;
+    .navbar-nav {
+        margin-top: 10px;
+    }
 }
-.search-bar {
-    width: 500%;
-    padding-right: 2.5rem;
-}
-.search-icon {
-    position: absolute;
-    right: 0.5rem; 
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.5rem; 
-    color: #888; 
-}
-/* end search bar */
