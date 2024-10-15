@@ -26,7 +26,12 @@
             </div>
         <% } %>
 
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#signinModal">Iniciar Sesión</button>
+        <% if (!userId) { %>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#signinModal">Iniciar Sesión</button>
+        <% } else { %>
+            <p>¡Bienvenido!</p>
+            <a href="/logout" class="btn btn-danger">Cerrar Sesión</a>
+        <% } %>
 
         <!-- Modal para Iniciar Sesión -->
         <div class="modal fade" id="signinModal" tabindex="-1" aria-labelledby="signinModalLabel" aria-hidden="true">
@@ -83,7 +88,9 @@
                             <button type="submit" class="btn btn-primary">Registrarse</button>
                             <button type="button" id="register-as-teacher" class="btn btn-secondary">Registrarse como profesor</button>
                         </form>
-                        <p class="mt-3">¿Ya tienes una cuenta? <a href="#" id="backToSignin">Inicia sesión aquí</a></p>
+                        <% if (!userId) { %>
+                            <p class="mt-3">¿Ya tienes una cuenta? <a href="#" id="backToSignin">Inicia sesión aquí</a></p>
+                        <% } %>
                     </div>
                 </div>
             </div>
