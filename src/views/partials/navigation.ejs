@@ -25,17 +25,22 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/profile">Perfil</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="modal" data-bs-target="#signupModal">Registrarse</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="modal" data-bs-target="#signinModal">Iniciar Sesión</a>
-                </li>
+                <% if (!userId) { %>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="modal" data-bs-target="#signupModal">Registrarse</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="modal" data-bs-target="#signinModal">Iniciar Sesión</a>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Cerrar Sesión</a>
+                    </li>
+                <% } %>
             </ul>
         </div>
     </div>
 </nav>
-
 
 <!-- Modal para Registro -->
 <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
@@ -67,7 +72,6 @@
                     <button type="button" id="register-as-teacher" class="btn btn-secondary">Registrarse como profesor</button>
                 </form>
 
-                <!-- Formulario de Registro como Profesor (oculto inicialmente) -->
                 <form id="teacher-registration-form" action="/signup" method="POST" style="display: none;">
                     <div class="mb-3">
                         <label for="teacher-name" class="form-label">Nombres</label>
@@ -97,7 +101,6 @@
                     <button type="button" id="back-to-student-form" class="btn btn-secondary">Volver al registro de estudiante</button>
                 </form>
 
-                <!-- Mensaje para iniciar sesión si ya tienes cuenta -->
                 <p class="mt-3 text-center">¿Ya tienes una cuenta? <a href="#" id="openSigninModal">Inicia sesión aquí</a></p>
             </div>
         </div>
@@ -113,12 +116,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <% if (typeof successMessage !== 'undefined' && successMessage) { %>
-                    <div class="alert alert-success" role="alert">
-                        <%= successMessage %>
-                    </div>
-                <% } %>
-
                 <form action="/signin" method="POST">
                     <div class="mb-3">
                         <label for="signin-email" class="form-label">Correo Electrónico</label>
@@ -129,7 +126,7 @@
                         <input type="password" class="form-control" id="signin-password" name="password" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
-                    <p class="mt-3">¿No tienes una cuenta? <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Regístrate aquí</a></p>
+                    <p class="mt-3">¿No tienes una cuenta? <a href="#" id="openSignupModal">Regístrate aquí</a></p>
                 </form>
             </div>
         </div>
@@ -143,48 +140,28 @@
 <!-- Include jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Include Material Icons -->
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-<!-- JavaScript para manejar los formularios dentro del modal -->
 <script>
-    $(document).ready(function() {
-        $('#register-as-teacher').click(function() {
-            $('#student-registration-form').hide();
-            $('#teacher-registration-form').show();
-        });
-
-        $('#back-to-student-form').click(function() {
-            $('#teacher-registration-form').hide();
-            $('#student-registration-form').show();
-        });
-
-        // Evento para abrir el modal de inicio de sesión
-        $('#openSigninModal').click(function() {
-            $('#signupModal').modal('hide'); 
-            $('#signinModal').modal('show'); 
-        });
-
-        // Evento para abrir el modal de registro
-        $('#signupModal').on('show.bs.modal', function () {
-            $('#signinModal').modal('hide'); 
-        });
-
-        // Evento para abrir el modal de inicio de sesión
-        $('#signinModal').on('show.bs.modal', function () {
-            $('#signupModal').modal('hide'); 
-        });
+$(document).ready(function() {
+    $('#register-as-teacher').click(function() {
+        $('#student-registration-form').hide();
+        $('#teacher-registration-form').show();
     });
-</script>
 
-<!-- JavaScript para el efecto de scroll -->
-<script>
-    window.addEventListener('scroll', function() {
-        const navbar = document.querySelector('.navbar');
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
+    $('#back-to-student-form').click(function() {
+        $('#teacher-registration-form').hide();
+        $('#student-registration-form').show();
     });
+
+    $('#openSigninModal').click(function(event) {
+        event.preventDefault();
+        $('#signupModal').modal('hide');
+        $('#signinModal').modal('show');
+    });
+
+    $('#openSignupModal').click(function(event) {
+        event.preventDefault();
+        $('#signinModal').modal('hide');
+        $('#signupModal').modal('show');
+    });
+});
 </script>

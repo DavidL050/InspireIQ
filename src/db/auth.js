@@ -1,49 +1,60 @@
-const bcrypt = require('bcryptjs');
-const db = require('./database');
+import bcrypt from 'bcryptjs';
+import db from './database.js';
 
 // Registro de usuarios
-function registerUser(firstName, lastName, email, password, role, callback) {
-    bcrypt.hash(password, 10, (err, hash) => {
-        if (err) {
-            return callback(err);
-        }
+async function registerUser(firstName, lastName, email, password, role) {
+    try {
+        const hash = await bcrypt.hash(password, 10);
+        const query = `INSERT INTO users (first_name, last_name, email, password, role) VALUES (?, ?, ?, ?, ?)`;
 
-        const query = `INSERT INTO users (first_name, last_name,email, password, role)
-                       VALUES (?, ?, ?, ?, ?, ?)`;
-
-        db.query(query, [firstName, lastName, email, hash, role], (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(null, results);
+        return new Promise((resolve, reject) => {
+            db.query(query, [firstName, lastName, email, hash, role], (err, results) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(results);
+            });
         });
-    });
+    } catch (err) {
+        throw new Error('Error al registrar el usuario: ' + err.message);
+    }
 }
 
 // Inicio de sesión
-function loginUser(email, password, callback) {
+async function loginUser(email, password, req) {
     const query = `SELECT * FROM users WHERE email = ?`;
 
-    db.query(query, [email], (err, results) => {
-        if (err) {
-            return callback(err);
-        }
-        if (results.length === 0) {
-            return callback(new Error('Usuario no encontrado'));
-        }
-
-        const user = results[0];
-
-        bcrypt.compare(password, user.password, (err, isMatch) => {
+    return new Promise((resolve, reject) => {
+        db.query(query, [email], async (err, results) => {
             if (err) {
-                return callback(err);
+                return reject(err);
             }
+            if (results.length === 0) {
+                return reject(new Error('Usuario no encontrado'));
+            }
+
+            const user = results[0];
+
+            const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
-                return callback(new Error('Contraseña incorrecta'));
+                return reject(new Error('Contraseña incorrecta'));
             }
-            callback(null, user);
+
+            // Guardar información del usuario en la sesión
+            req.session.userId = user.id; // Almacena el ID del usuario en la sesión
+            req.session.userRole = user.role; // Almacena el rol del usuario en la sesión
+            resolve(user);
         });
     });
 }
 
-module.exports = { registerUser, loginUser };
+// Cerrar sesión
+function logoutUser(req) {
+    req.session.destroy((err) => {
+        if (err) {
+            console.log('Error al cerrar sesión:', err);
+        }
+    });
+}
+
+export { registerUser, loginUser, logoutUser };

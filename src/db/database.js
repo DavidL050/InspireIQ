@@ -3,7 +3,7 @@ import mysql from 'mysql2';
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '840862_Mv',
+    password: '12345678',
     database: 'inspire_iq'
 });
 
