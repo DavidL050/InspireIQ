@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginUser, logoutUser, registerUser } from "../db/auth.js";
+import { loginUser, logoutUser, registerUser, getUserById } from "../db/auth.js"; // Asegúrate de tener esta función en auth.js
 
 const router = Router();
 
@@ -55,9 +55,8 @@ router.post("/signin", async (req, res) => {
   console.log('Sesión antes de iniciar sesión:', req.session); // Verifica el estado de la sesión
   const { email, password } = req.body;
   try {
-    
     const user = await loginUser(email, password, req); 
-    console.log(user)
+    console.log(user);
     req.session.userId = user.user_id; // Asigna el ID del usuario a la sesión
     req.session.userRole = user.role; // Asigna el rol del usuario a la sesión
     
@@ -85,14 +84,37 @@ router.get("/logout", async (req, res) => {
   }
 });
 
+// Ruta de perfil
+router.get("/profile", isAuthenticated, async (req, res) => {
+  try {
+    const user = await getUserById(req.session.userId); // Obtener información del usuario de la base de datos
+    res.render("profile.ejs", { user }); // Pasar el objeto user a la vista
+  } catch (err) {
+    console.error('Error al cargar el perfil del usuario:', err);
+    res.status(500).send('Error en el servidor');
+  }
+});
 
-// Ver un curso (requiere autenticación)
-router.get("/course", isAuthenticated, (req, res) => res.render("course.ejs"));
+// Ruta para ver un curso 
+router.get("/course", isAuthenticated, async (req, res) => {
+  try {
+    const user = await getUserById(req.session.userId);
+    res.render("course.ejs", { user }); // Pasar el objeto user a la vista de curso
+  } catch (err) {
+    console.error('Error al cargar el curso:', err);
+    res.status(500).send('Error en el servidor');
+  }
+});
 
-// Detalles de un curso (requiere autenticación)
-router.get("/details", isAuthenticated, (req, res) => res.render("details.ejs"));
-
-// Perfil del usuario (requiere autenticación)
-router.get("/profile", isAuthenticated, (req, res) => res.render("profile.ejs"));
+// Ruta para los detalles de un curso 
+router.get("/details", isAuthenticated, async (req, res) => {
+  try {
+    const user = await getUserById(req.session.userId);
+    res.render("details.ejs", { user }); 
+  } catch (err) {
+    console.error('Error al cargar los detalles del curso:', err);
+    res.status(500).send('Error en el servidor');
+  }
+});
 
 export default router;

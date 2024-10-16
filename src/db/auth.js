@@ -69,4 +69,20 @@ function logoutUser(req) {
   });
 }
 
-export { registerUser, loginUser, logoutUser };
+// Función para obtener el usuario por su ID
+async function getUserById(userId) {
+  const query = `SELECT * FROM users WHERE user_id = ?`;
+  return new Promise((resolve, reject) => {
+    db.query(query, [userId], (err, results) => {
+      if (err) {
+        return reject(new Error('Error al obtener el usuario: ' + err.message));
+      }
+      if (results.length === 0) {
+        return reject(new Error('Usuario no encontrado'));
+      }
+      resolve(results[0]); // Devolver el primer resultado, que es el usuario
+    });
+  });
+}
+
+export { registerUser, loginUser, logoutUser, getUserById };
