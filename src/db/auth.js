@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import db from './database.js';
 
+// Función para registrar un usuario
 async function registerUser(firstName, lastName, email, password, role) {
   try {
     const hash = await bcrypt.hash(password, 10);
@@ -8,7 +9,7 @@ async function registerUser(firstName, lastName, email, password, role) {
     return new Promise((resolve, reject) => {
       db.query(query, [firstName, lastName, email, hash, role], (err, results) => {
         if (err) {
-          return reject(err);
+          return reject(new Error('Error al registrar el usuario: ' + err.message));
         }
         resolve(results);
       });
@@ -18,16 +19,18 @@ async function registerUser(firstName, lastName, email, password, role) {
   }
 }
 
+// Función para iniciar sesión
 async function loginUser(email, password, req) {
   const query = `SELECT * FROM users WHERE email = ?`;
   return new Promise((resolve, reject) => {
     db.query(query, [email], async (err, results) => {
       if (err) {
-        return reject(err);
+        return reject(new Error('Error en la consulta a la base de datos: ' + err.message));
       }
       if (results.length === 0) {
         return reject(new Error('Usuario no encontrado'));
       }
+
       const user = results[0];
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
@@ -35,11 +38,17 @@ async function loginUser(email, password, req) {
       }
       
       // Guardar información del usuario en la sesión
-      req.session.userId = user.id;
+      if (!req || !req.session) {
+        return reject(new Error('La sesión no está disponible'));
+      }
+
+      req.session.userId = user.user_id;
       req.session.userRole = user.role;
+
+      // Guardar sesión y resolver la promesa
       req.session.save(err => {
         if (err) {
-          return reject(new Error('Error al guardar la sesión'));
+          return reject(new Error('Error al guardar la sesión: ' + err.message));
         }
         resolve(user);
       });
@@ -47,15 +56,15 @@ async function loginUser(email, password, req) {
   });
 }
 
+// Función para cerrar sesión
 function logoutUser(req) {
   return new Promise((resolve, reject) => {
     req.session.destroy(err => {
       if (err) {
         console.error('Error al cerrar sesión:', err);
-        reject(err);
-      } else {
-        resolve();
+        return reject(new Error('Error al cerrar sesión: ' + err.message));
       }
+      resolve();
     });
   });
 }
