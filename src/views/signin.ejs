@@ -14,22 +14,25 @@
     <main class="container mt-5">
         <h2>Iniciar Sesión</h2>
 
+        <!-- Mensaje de éxito -->
         <% if (typeof successMessage !== 'undefined' && successMessage) { %>
             <div class="alert alert-success" role="alert">
                 <%= successMessage %>
             </div>
         <% } %>
 
+        <!-- Mensaje de error -->
         <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
             <div class="alert alert-danger" role="alert">
                 <%= errorMessage %>
             </div>
         <% } %>
 
+        <!-- Mostrar el botón de "Iniciar sesión" solo si el usuario NO ha iniciado sesión -->
         <% if (!userId) { %>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#signinModal">Iniciar Sesión</button>
-        <% } else { %>
-            <p>¡Bienvenido!</p>
+        <% } else { %> <!-- Si el usuario ha iniciado sesión -->
+            <p>¡Bienvenido! Ya has iniciado sesión.</p>
             <a href="/logout" class="btn btn-danger">Cerrar Sesión</a>
         <% } %>
 

@@ -153,3 +153,35 @@ main {
         margin-top: 10px;
     }
 }
+.course-section {
+    margin-bottom: 40px;
+}
+
+.card {
+    margin-bottom: 20px;
+}
+
+.card-body {
+    text-align: center;
+}
+
+.price {
+    color: #ff4500;
+    font-weight: bold;
+}
+.footer {
+    background-color: #222;
+    color: #fff;
+    padding: 10px 0; /* Reduce la altura del footer */
+    margin-top: auto; /* Empuja el footer hacia abajo */
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.footer .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
