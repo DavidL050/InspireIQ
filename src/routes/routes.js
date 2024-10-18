@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { loginUser, logoutUser, registerUser, getUserById } from "../db/auth.js";
+import { loginUser, logoutUser, registerUser, getUserById, getUserCourseProgress, getUserLinks } from "../db/auth.js";
+import db from "../db/database.js"
 
 const router = Router();
 
@@ -96,12 +97,34 @@ router.get("/logout", async (req, res) => {
 router.get("/profile", isAuthenticated, async (req, res) => {
   try {
     const user = await getUserById(req.session.userId);
-    res.render("profile.ejs", { user });
+    const coursesProgress = await getUserCourseProgress(req.session.userId);
+    const userLinks = await getUserLinks(req.session.userId);
+
+    res.render("profile.ejs", { user, coursesProgress, userLinks });
   } catch (err) {
     console.error("Error al obtener el perfil del usuario:", err);
     res.status(500).json({ error: 'Error en el servidor al obtener el perfil del usuario' });
   }
 });
+//Ruta para guardar enlaces
+router.post("/profile/links/save", isAuthenticated, async (req, res) => {
+  try {
+    const { linkName, linkUrl } = req.body;
+    const userId = req.session.userId;
+
+    // Guardar el nuevo enlace en la base de datos
+    await db.query(
+      'INSERT INTO user_links (user_id, link_name, link_url) VALUES (?, ?, ?)',
+      [userId, linkName, linkUrl]
+    );
+
+    res.redirect("/profile");
+  } catch (err) {
+    console.error("Error al guardar el enlace:", err);
+    res.status(500).json({ error: 'Error al guardar el enlace' });
+  }
+});
+
 
 // Página de detalles (requiere autenticación)
 router.get("/details", isAuthenticated, async (req, res) => {

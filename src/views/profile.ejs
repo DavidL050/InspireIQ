@@ -10,7 +10,7 @@
 </head>
 <body>
     <header>
-        <%- include('partials/navigation')%>
+        <%- include('partials/navigation') %>
     </header>
     
     <div class="container mt-4">
@@ -18,83 +18,92 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body text-center">
-                        <img src="https://via.placeholder.com/150" class="rounded-circle mb-3" alt="John Doe">
-                        <h3>John Doe</h3>
-                        <p>Full Stack Developer</p>
-                    
-                        
+                        <img src="https://via.placeholder.com/150" class="rounded-circle mb-3" alt="<%= user.first_name %>">
+                        <h3><%= user.first_name %> <%= user.last_name %></h3>
+                        <p><%= user.role %></p>
                         <hr>
                         <div class="text-start">
                             <p><i class="material-icons align-middle">person</i> Biografía:</p>
-                            <p>¡Hola! Soy un apasionado desarrollador web y diseñador creativo. Me encanta crear experiencias digitales únicas y atractivas. Siempre estoy aprendiendo nuevas tecnologías y explorando formas innovadoras de resolver problemas.</p>
-                            <p><i class="material-icons align-middle">language</i> <a href="https://bootdey.com">https://bootdey.com</a></p>
-                            <p><i class="material-icons align-middle">code</i> <a href="#">bootdey</a></p>
-                            <p><i class="material-icons align-middle">share</i> <a href="#">@bootdey</a></p>
-                            <p><i class="material-icons align-middle">camera_alt</i> <a href="#">bootdey</a></p>
-                            <p><i class="material-icons align-middle">facebook</i> <a href="#">bootdey</a></p>
+                            <p><%= user.biography || "Sin biografía" %></p>
 
+                            <!-- Mostrar enlaces sociales -->
+                            <p><i class="material-icons align-middle">link</i> Enlaces Sociales:</p>
+                            <% if (userLinks.length > 0) { %>
+                                <ul>
+                                    <% userLinks.forEach(link => { %>
+                                        <li><a href="<%= link.link_url %>" target="_blank"><%= link.link_name %></a></li>
+                                    <% }) %>
+                                </ul>
+                            <% } else { %>
+                                <p>Este usuario no ha agregado enlaces sociales.</p>
+                            <% } %>
                         </div>
                     </div>
                 </div>
             </div>
+
             <div class="col-md-8">
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">Información de perfil</h5>
-                        <form>
+                        <form action="/profile/save" method="POST">
                             <div class="mb-3">
                                 <label for="firstName" class="form-label">Nombres</label>
-                                <input type="text" class="form-control" id="firstName" value="John">
+                                <input type="text" class="form-control" id="firstName" name="firstName" value="<%= user.first_name %>">
                             </div>
                             <div class="mb-3">
                                 <label for="lastName" class="form-label">Apellidos</label>
-                                <input type="text" class="form-control" id="lastName" value="Doe">
+                                <input type="text" class="form-control" id="lastName" name="lastName" value="<%= user.last_name %>">
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="email" value="john@example.com">
+                                <input type="email" class="form-control" id="email" name="email" value="<%= user.email %>">
                             </div>
                             <div class="mb-3">
                                 <label for="biography" class="form-label">Biografía</label>
-                                <textarea class="form-control" id="biography" rows="4"></textarea>
+                                <textarea class="form-control" id="biography" name="biography" rows="4"><%= user.biography %></textarea>
                             </div>
                             <button type="submit" class="btn btn-primary">Guardar cambios</button>
                         </form>
                     </div>
                 </div>
+
+                <!-- Sección para mostrar progreso de cursos -->
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Progreso de Cursos</h5>
-                        <div class="mb-3">
-                            <label class="form-label">HTML</label>
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: 100%; background-color: darkorange;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        <% if (coursesProgress.length > 0) { %>
+                            <% coursesProgress.forEach(course => { %>
+                                <div class="mb-3">
+                                    <label class="form-label"><%= course.name %></label>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: <%= course.progress %>%" aria-valuenow="<%= course.progress %>" aria-valuemin="0" aria-valuemax="100">
+                                            <%= course.progress %>% completado
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <p>No se ha registrado progreso en ningún curso.</p>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Formulario para agregar nuevos enlaces sociales -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Agregar/Editar Enlaces Sociales</h5>
+                        <form action="/profile/links/save" method="POST">
+                            <div class="mb-3">
+                                <label for="linkName" class="form-label">Nombre del enlace</label>
+                                <input type="text" class="form-control" id="linkName" name="linkName" placeholder="Ej: LinkedIn, GitHub">
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">TypeScript</label>
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: 100%; background-color:rgb(17, 34, 144)" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="mb-3">
+                                <label for="linkUrl" class="form-label">URL del enlace</label>
+                                <input type="url" class="form-control" id="linkUrl" name="linkUrl" placeholder="https://example.com">
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">JavaScript</label>
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: 100%; background-color: gold;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">CSS</label>
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: 75%;background-color: blue;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Python</label>
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: 100%; background-color: #add8e6;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
+                            <button type="submit" class="btn btn-primary">Guardar Enlace</button>
+                        </form>
                     </div>
                 </div>
             </div>

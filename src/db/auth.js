@@ -7,7 +7,7 @@ async function registerUser(name, lastname, email, password, role) {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await db.query(
-      'INSERT INTO users (name, lastname, email, password, role) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO users (first_name, last_name, email, password, role) VALUES (?, ?, ?, ?, ?)',
       [name, lastname, email, hashedPassword, role]
     );
     return { userId: result.insertId };
@@ -79,5 +79,42 @@ async function getUserById(userId) {
     throw err;
   }
 }
+// Función para obtener el progreso del usuario en los cursos
+async function getUserCourseProgress(userId) {
+  try {
+    // Consulta para obtener el progreso del usuario en los cursos
+    const [coursesProgress] = await db.query(
+      'SELECT c.name, cp.progress FROM course_progress cp JOIN courses c ON cp.course_id = c.course_id WHERE cp.user_id = ?',
+      [userId]
+    );
 
-export { registerUser, loginUser, logoutUser, getUserById };
+    if (coursesProgress.length === 0) {
+      return [];
+    }
+
+    return coursesProgress;
+  } catch (err) {
+    console.error('Error al obtener el progreso de los cursos:', err);
+    throw err;
+  }
+}
+// Función para obtener los enlaces sociales del usuario
+async function getUserLinks(userId) {
+  try {
+    // Consulta para obtener los enlaces sociales del usuario
+    const [userLinks] = await db.query(
+      'SELECT link_name, link_url FROM user_links WHERE user_id = ?',
+      [userId]
+    );
+    
+    return userLinks;
+  } catch (err) {
+    console.error('Error al obtener los enlaces del usuario:', err);
+    throw err;
+  }
+}
+
+export { registerUser, loginUser, logoutUser, getUserById, getUserCourseProgress, getUserLinks };
+
+
+
