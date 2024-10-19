@@ -100,40 +100,81 @@ router.get("/profile", isAuthenticated, async (req, res) => {
     const coursesProgress = await getUserCourseProgress(req.session.userId);
     const userLinks = await getUserLinks(req.session.userId);
 
+    // Verifica si los link_id están presentes
+    console.log("Enlaces del usuario con IDs:", userLinks);
+
     res.render("profile.ejs", { user, coursesProgress, userLinks });
   } catch (err) {
     console.error("Error al obtener el perfil del usuario:", err);
     res.status(500).json({ error: 'Error en el servidor al obtener el perfil del usuario' });
   }
 });
-//Ruta para guardar enlaces
-router.post("/profile/links/save", isAuthenticated, async (req, res) => {
-  try {
-    const { linkName, linkUrl } = req.body;
-    const userId = req.session.userId;
 
-    // Guardar el nuevo enlace en la base de datos
-    await db.query(
-      'INSERT INTO user_links (user_id, link_name, link_url) VALUES (?, ?, ?)',
-      [userId, linkName, linkUrl]
-    );
+router.post("/profile/save", isAuthenticated, async (req, res) => {
+  const { firstName, lastName, email, biography, linkName, linkUrl, action } = req.body;
+  const userId = req.session.userId;
+
+  try {
+    if (action === "saveProfile") {
+      // Actualizar los datos del perfil
+      await db.query(
+        'UPDATE users SET first_name = ?, last_name = ?, email = ?, biography = ? WHERE user_id = ?',
+        [firstName, lastName, email, biography, userId]
+      );
+      req.flash('successMessage', 'Cambios de perfil guardados correctamente.');
+    }
+
+    if (action === "addLink" && linkName && linkUrl) {
+      // Verificar si el enlace ya existe para evitar duplicados
+      const [existingLink] = await db.query(
+        'SELECT * FROM user_links WHERE user_id = ? AND link_name = ? AND link_url = ?',
+        [userId, linkName, linkUrl]
+      );
+
+      if (existingLink.length > 0) {
+        req.flash('errorMessage', 'Este enlace ya ha sido agregado.');
+      } else {
+        // Agregar nuevo enlace social si no existe
+        await db.query(
+          'INSERT INTO user_links (user_id, link_name, link_url) VALUES (?, ?, ?)',
+          [userId, linkName, linkUrl]
+        );
+        req.flash('successMessage', 'Enlace agregado correctamente.');
+      }
+    }
 
     res.redirect("/profile");
   } catch (err) {
-    console.error("Error al guardar el enlace:", err);
-    res.status(500).json({ error: 'Error al guardar el enlace' });
+    console.error("Error al procesar la solicitud:", err);
+    req.flash('errorMessage', 'Hubo un error al procesar tu solicitud.');
+    res.redirect("/profile");
   }
 });
+//Ruta para eliminar enlaces
 
+router.post("/profile/delete-link", async (req, res) => {
+  const { deleteLinkId } = req.body;
 
-// Página de detalles (requiere autenticación)
-router.get("/details", isAuthenticated, async (req, res) => {
+  if (!deleteLinkId) {
+    req.flash('error', 'ID de enlace no proporcionado.');
+    return res.redirect('/profile');
+  }
+
   try {
-    const user = await getUserById(req.session.userId);
-    res.render("details.ejs", { user });
+    const userId = req.session.userId;
+    const result = await db.query('DELETE FROM user_links WHERE link_id = ? AND user_id = ?', [deleteLinkId, userId]);
+
+    if (result.affectedRows === 0) {
+      req.flash('error', 'Enlace no encontrado o no tienes permiso para eliminarlo.');
+      return res.redirect('/profile');
+    }
+
+    req.flash('success', 'Enlace eliminado correctamente.');
+    res.redirect('/profile');
   } catch (err) {
-    console.error("Error al obtener los detalles del usuario:", err);
-    res.status(500).json({ error: 'Error en el servidor al obtener los detalles del usuario' });
+    console.error("Error al eliminar el enlace:", err);
+    req.flash('error', 'Error al eliminar el enlace.');
+    res.redirect('/profile');
   }
 });
 
@@ -141,6 +182,26 @@ router.get("/details", isAuthenticated, async (req, res) => {
 router.get("/course", isAuthenticated, async (req, res) => {
   try {
     res.render("course.ejs");
+  } catch (err) {
+    console.error("Error al cargar la página del curso:", err);
+    res.status(500).json({ error: 'Error en el servidor al cargar la página del curso' });
+  }
+});
+
+// Página de crear curso (requiere autenticación)
+router.get("/create_course", isAuthenticated, async (req, res) => {
+  try {
+    res.render("create_course.ejs");
+  } catch (err) {
+    console.error("Error al cargar la página del curso:", err);
+    res.status(500).json({ error: 'Error en el servidor al cargar la página del curso' });
+  }
+});
+
+// Página de detalles de curso (requiere autenticación)
+router.get("/course_details", isAuthenticated, async (req, res) => {
+  try {
+    res.render("course_details.ejs");
   } catch (err) {
     console.error("Error al cargar la página del curso:", err);
     res.status(500).json({ error: 'Error en el servidor al cargar la página del curso' });

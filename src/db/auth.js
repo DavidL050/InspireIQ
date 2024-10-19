@@ -101,18 +101,19 @@ async function getUserCourseProgress(userId) {
 // Función para obtener los enlaces sociales del usuario
 async function getUserLinks(userId) {
   try {
-    // Consulta para obtener los enlaces sociales del usuario
+    // Incluye el campo `link_id` en la consulta
     const [userLinks] = await db.query(
-      'SELECT link_name, link_url FROM user_links WHERE user_id = ?',
+      'SELECT link_id, link_name, link_url FROM user_links WHERE user_id = ?',
       [userId]
     );
     
-    return userLinks;
+    return userLinks;  // Devuelve los resultados, incluyendo el `link_id`
   } catch (err) {
     console.error('Error al obtener los enlaces del usuario:', err);
     throw err;
   }
 }
+
 
 export { registerUser, loginUser, logoutUser, getUserById, getUserCourseProgress, getUserLinks };
 

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import session from 'express-session';
 import indexRoutes from './routes/routes.js';
 import db from './db/database.js';
+import flash from 'connect-flash';
 
 const app = express();
 
@@ -19,6 +20,8 @@ app.use(session({
   }
 }));
 
+// Inicializar mensajes flash
+app.use(flash());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -31,6 +34,12 @@ app.use((req, res, next) => {
   res.locals.userId = req.session.userId || null; // Asegúrate de que userId se asigne correctamente
   console.log('Session ID:', req.sessionID); // Muestra el ID de la sesión
   console.log('Session data:', req.session); // Muestra todos los datos de la sesión
+  next();
+});
+// Middleware para pasar mensajes flash a las vistas
+app.use((req, res, next) => {
+  res.locals.successMessage = req.flash('successMessage');
+  res.locals.errorMessage = req.flash('errorMessage');
   next();
 });
 

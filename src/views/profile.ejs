@@ -1,12 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil de Usuario</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
+    <script>
+        
+        function deleteLink(linkId) {
+        // Verifica que el ID esté siendo pasado correctamente
+        console.log("Intentando eliminar el enlace con ID:", linkId);
+        
+        if (confirm('¿Estás seguro de que deseas eliminar este enlace?')) {
+            document.getElementById('deleteLinkId').value = linkId; // Asigna el ID al campo oculto
+            document.getElementById('deleteLinkForm').submit(); // Envía el formulario
+        }
+    }
+
+
+        function editLink(linkId, name, url) {
+            document.getElementById('linkId').value = linkId;
+            document.getElementById('linkName').value = name;
+            document.getElementById('linkUrl').value = url;
+            document.getElementById('addLinkButton').innerText = 'Actualizar enlace';
+        }
+
+        function resetForm() {
+            document.getElementById('linkId').value = '';
+            document.getElementById('linkName').value = '';
+            document.getElementById('linkUrl').value = '';
+            document.getElementById('addLinkButton').innerText = 'Agregar nuevo enlace';
+        }
+    </script>
 </head>
 <body>
     <header>
@@ -14,6 +41,18 @@
     </header>
     
     <div class="container mt-4">
+        <% if (successMessage && successMessage.length > 0) { %>
+            <div class="alert alert-success" role="alert">
+                <%= successMessage %>
+            </div>
+        <% } %>
+
+        <% if (errorMessage && errorMessage.length > 0) { %>
+            <div class="alert alert-danger" role="alert">
+                <%= errorMessage %>
+            </div>
+        <% } %>
+
         <div class="row">
             <div class="col-md-4">
                 <div class="card">
@@ -26,16 +65,23 @@
                             <p><i class="material-icons align-middle">person</i> Biografía:</p>
                             <p><%= user.biography || "Sin biografía" %></p>
 
-                            <!-- Mostrar enlaces sociales -->
                             <p><i class="material-icons align-middle">link</i> Enlaces Sociales:</p>
                             <% if (userLinks.length > 0) { %>
                                 <ul>
                                     <% userLinks.forEach(link => { %>
-                                        <li><a href="<%= link.link_url %>" target="_blank"><%= link.link_name %></a></li>
+                                        <li>
+                                            <a href="<%= link.link_url %>" target="_blank"><%= link.link_name %></a>
+                                            <button class="btn btn-link p-0" type="button" onclick="editLink('<%= link.link_id %>', '<%= link.link_name %>', '<%= link.link_url %>')">
+                                                <i class="material-icons" style="color: #6c757d;">edit</i>
+                                            </button>
+                                            <button class="btn btn-link p-0" type="button" onclick="deleteLink('<%= link.link_id %>')">
+                                                <i class="material-icons" style="color: #dc3545;">delete</i>
+                                            </button>
+                                        </li>
                                     <% }) %>
                                 </ul>
                             <% } else { %>
-                                <p>Este usuario no ha agregado enlaces sociales.</p>
+                                <p>No se ha agregado ningún enlace social.</p>
                             <% } %>
                         </div>
                     </div>
@@ -44,31 +90,46 @@
 
             <div class="col-md-8">
                 <div class="card mb-4">
-                    <div class="card-body">
+                    <div class="card-body text-start">
                         <h5 class="card-title">Información de perfil</h5>
                         <form action="/profile/save" method="POST">
                             <div class="mb-3">
                                 <label for="firstName" class="form-label">Nombres</label>
-                                <input type="text" class="form-control" id="firstName" name="firstName" value="<%= user.first_name %>">
+                                <input type="text" class="form-control" id="firstName" name="firstName" value="<%= user.first_name %>" required>
                             </div>
                             <div class="mb-3">
                                 <label for="lastName" class="form-label">Apellidos</label>
-                                <input type="text" class="form-control" id="lastName" name="lastName" value="<%= user.last_name %>">
+                                <input type="text" class="form-control" id="lastName" name="lastName" value="<%= user.last_name %>" required>
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="email" name="email" value="<%= user.email %>">
+                                <input type="email" class="form-control" id="email" name="email" value="<%= user.email %>" required>
                             </div>
                             <div class="mb-3">
                                 <label for="biography" class="form-label">Biografía</label>
-                                <textarea class="form-control" id="biography" name="biography" rows="4"><%= user.biography %></textarea>
+                                <textarea class="form-control" id="biography" name="biography" rows="4" required><%= user.biography %></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+
+                            <h5 class="card-title">Agregar o Editar Enlace Social</h5>
+                            <input type="hidden" id="linkId" name="linkId">
+                            <div class="mb-3">
+                                <label for="linkName" class="form-label">Nombre del enlace</label>
+                                <input type="text" class="form-control" id="linkName" name="linkName" placeholder="Ej: LinkedIn, GitHub" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="linkUrl" class="form-label">URL del enlace</label>
+                                <input type="url" class="form-control" id="linkUrl" name="linkUrl" placeholder="https://example.com" required>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <button type="submit" class="btn btn-secondary" id="addLinkButton" name="action" value="addLink">Agregar nuevo enlace</button>
+                                <button type="submit" class="btn btn-primary" name="action" value="saveProfile">Guardar cambios</button>
+                            </div>
                         </form>
+                        <button class="btn btn-primary mt-3" onclick="resetForm()">Cancelar edición</button>
                     </div>
                 </div>
 
-                <!-- Sección para mostrar progreso de cursos -->
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Progreso de Cursos</h5>
@@ -88,26 +149,13 @@
                         <% } %>
                     </div>
                 </div>
-
-                <!-- Formulario para agregar nuevos enlaces sociales -->
-                <div class="card mt-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Agregar/Editar Enlaces Sociales</h5>
-                        <form action="/profile/links/save" method="POST">
-                            <div class="mb-3">
-                                <label for="linkName" class="form-label">Nombre del enlace</label>
-                                <input type="text" class="form-control" id="linkName" name="linkName" placeholder="Ej: LinkedIn, GitHub">
-                            </div>
-                            <div class="mb-3">
-                                <label for="linkUrl" class="form-label">URL del enlace</label>
-                                <input type="url" class="form-control" id="linkUrl" name="linkUrl" placeholder="https://example.com">
-                            </div>
-                            <button type="submit" class="btn btn-primary">Guardar Enlace</button>
-                        </form>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
+
+    <!-- Formulario para eliminar enlace (oculto) -->
+    <form id="deleteLinkForm" action="/profile/delete-link" method="POST">
+        <input type="hidden" id="deleteLinkId" name="deleteLinkId">
+    </form>
 </body>
 </html>
