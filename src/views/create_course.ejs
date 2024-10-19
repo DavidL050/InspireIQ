@@ -43,9 +43,13 @@
                 <div class="mb-3">
                     <label for="category" class="form-label required">Categoría</label>
                     <select class="form-select" id="category" name="category" required>
-                        <option value="">Seleccionar categoría</option>
+                      <option value="">Seleccionar categoría</option>
+                      <% categories.forEach(category => { %>
+                        <option value="<%= category.category_id %>"><%= category.name %></option>
+                      <% }); %>
                     </select>
-                </div>
+                  </div>
+                  
 
                 <h3 class="mt-4 mb-3">Requerimientos del Curso</h3>
                 <div id="requirements" class="mb-3">

@@ -191,20 +191,45 @@ router.get("/course", isAuthenticated, async (req, res) => {
 // Página de crear curso (requiere autenticación)
 router.get("/create_course", isAuthenticated, async (req, res) => {
   try {
-    res.render("create_course.ejs");
+    // Obtener las categorías de la base de datos
+    const result = await db.query('SELECT category_id, name FROM categories');
+
+    // Imprimir el resultado para depurar
+    console.log("Resultado de la consulta a categorías:", result);
+
+    // Solo tomar el primer elemento del array resultante
+    const categories = result[0];  // Esto debería ser la lista de categorías
+
+    // Validar si tenemos categorías
+    if (!categories || categories.length === 0) {
+      console.error("No se obtuvieron categorías.");
+      return res.status(500).json({ error: 'No se obtuvieron categorías.' });
+    }
+
+    // Renderizar la página de crear curso pasando las categorías
+    res.render("create_course.ejs", { categories });
   } catch (err) {
-    console.error("Error al cargar la página del curso:", err);
-    res.status(500).json({ error: 'Error en el servidor al cargar la página del curso' });
+    console.error("Error al cargar la página de creación de curso:", err);
+    res.status(500).json({ error: 'Error en el servidor al cargar la página de creación de curso.' });
   }
 });
 
+
+
+
 // Página de detalles de curso (requiere autenticación)
-router.get("/course_details", isAuthenticated, async (req, res) => {
+router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
+  const { courseId } = req.params;
+
   try {
-    res.render("course_details.ejs");
+    // Aquí podrías obtener más información del curso si lo necesitas
+    // const courseDetails = await db.query('SELECT * FROM courses WHERE id = ?', [courseId]);
+
+    res.render("course_details.ejs", { courseId });
   } catch (err) {
-    console.error("Error al cargar la página del curso:", err);
-    res.status(500).json({ error: 'Error en el servidor al cargar la página del curso' });
+    console.error("Error al cargar los detalles del curso:", err);
+    res.status(500).json({ error: 'Error en el servidor al cargar los detalles del curso' });
   }
 });
+
 export default router;

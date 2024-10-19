@@ -29,13 +29,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 app.set('views', join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// Middleware para hacer userId disponible en todas las vistas
+// Middleware para hacer userId y userRole disponibles en todas las vistas
 app.use((req, res, next) => {
-  res.locals.userId = req.session.userId || null; // Asegúrate de que userId se asigne correctamente
-  console.log('Session ID:', req.sessionID); // Muestra el ID de la sesión
+  res.locals.userId = req.session.userId || null; // Pasa el userId a las vistas
+  res.locals.userRole = req.session.userRole || null; // Pasa el userRole a las vistas
+  console.log('Session ID:', req.sessionID); // Muestra el ID de la sesión para depuración
   console.log('Session data:', req.session); // Muestra todos los datos de la sesión
   next();
 });
+
 // Middleware para pasar mensajes flash a las vistas
 app.use((req, res, next) => {
   res.locals.successMessage = req.flash('successMessage');
