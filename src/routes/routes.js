@@ -158,6 +158,20 @@ router.post("/profile/delete-link", async (req, res) => {
 });
 
 // ---- RUTAS DE CURSOS ----
+// Página de todos los cursos (requiere autenticación)
+router.get("/course", isAuthenticated, async (req, res) => {
+  try {
+      // Obtener todos los cursos de la base de datos
+      const [courses] = await db.query('SELECT * FROM courses');
+
+      // Renderizar la vista 'course.ejs' con los cursos obtenidos
+      res.render("course.ejs", { courses });
+  } catch (err) {
+      console.error("Error al cargar la página del curso:", err);
+      req.flash('errorMessage', 'Hubo un error al cargar los cursos.');
+      res.redirect('/');
+  }
+});
 
 // Página de crear curso (requiere autenticación)
 router.get("/create_course", isAuthenticated, async (req, res) => {

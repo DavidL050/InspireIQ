@@ -13,83 +13,99 @@
     <%- include('partials/navigation') %>
     
     <div class="main-content">
-        <div class="container">
-        <!-- Mostrar mensajes flash solo si contienen texto -->
-        <% if (successMessage && successMessage.length > 0) { %>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <%= successMessage %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <% } %>
+        <div class="container py-4">
+            <!-- Mostrar mensajes flash solo si contienen texto -->
+            <% if (successMessage && successMessage.length > 0) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <%= successMessage %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
 
-        <% if (errorMessage && errorMessage.length > 0) { %>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <%= errorMessage %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <% } %>
+            <% if (errorMessage && errorMessage.length > 0) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <%= errorMessage %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
 
-
-
-            <h1 class="mt-4 mb-4">Crear Nuevo Curso</h1>
+            <h1 class="mt-3 mb-4 text-center">Crear Nuevo Curso</h1>
 
             <!-- Formulario para crear curso -->
-            <form action="/create_course" method="POST" style="margin-bottom: 10px;">
-                <div class="mb-3">
-                    <label for="name" class="form-label required">Nombre del Curso</label>
-                    <input type="text" class="form-control" id="name" name="name" required>
+            <form action="/create_course" method="POST" class="mx-auto" style="max-width: 800px;">
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="name" class="form-label required">Nombre del Curso</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="description" class="form-label required">Descripción</label>
-                    <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="description" class="form-label required">Descripción</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="language" class="form-label required">Idioma</label>
-                    <select class="form-select" id="language" name="language" required>
-                        <option value="">Seleccionar idioma</option>
-                        <option value="es">Español</option>
-                        <option value="en">Inglés</option>
-                    </select>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="language" class="form-label required">Idioma</label>
+                        <select class="form-select" id="language" name="language" required>
+                            <option value="">Seleccionar idioma</option>
+                            <option value="es">Español</option>
+                            <option value="en">Inglés</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="cover_image" class="form-label">URL de la Imagen de Portada</label>
+                        <input type="url" class="form-control" id="cover_image" name="cover_image" placeholder="https://example.com/imagen.jpg">
+                    </div>
                 </div>
 
-                <!-- Imagen de portada como URL -->
-                <div class="mb-3">
-                    <label for="cover_image" class="form-label">URL de la Imagen de Portada</label>
-                    <input type="url" class="form-control" id="cover_image" name="cover_image" placeholder="https://example.com/imagen.jpg">
-                </div>
-
-                <!-- Categoría del curso -->
-                <div class="mb-3">
-                    <label for="category" class="form-label required">Categoría</label>
-                    <select class="form-select" id="category" name="category" required>
-                    <option value="">Seleccionar categoría</option>
-                    <% categories.forEach(category => { %>
-                        <option value="<%= category.category_id %>"><%= category.name %></option>
-                    <% }); %>
-                    </select>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="category" class="form-label required">Categoría</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">Seleccionar categoría</option>
+                            <% categories.forEach(category => { %>
+                                <option value="<%= category.category_id %>"><%= category.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Requerimientos del curso -->
-                <h3 class="mt-4 mb-3">Requerimientos del Curso</h3>
-                <div id="requirements" class="mb-3">
-                    <input type="text" class="form-control mb-2" name="requirements[]" placeholder="Agregar requerimiento">
-                </div>
-                <button type="button" class="btn btn-secondary mb-3" onclick="addRequirement()">Agregar otro requerimiento</button>
-
-                <!-- Secciones del curso -->
-                <h3 class="mt-4 mb-3">Secciones del Curso</h3>
-                <div id="sections" class="mb-3">
-                    <div class="section mb-3">
-                        <input type="text" class="form-control mb-2" name="section_title[]" placeholder="Título de la sección" required>
-                        <input type="url" class="form-control" name="video_url[]" placeholder="URL del video" required>
+                <div class="row mb-3">
+                    <div class="col">
+                        <h3>Requerimientos del Curso</h3>
+                        <div id="requirements" class="mb-3">
+                            <input type="text" class="form-control mb-2" name="requirements[]" placeholder="Agregar requerimiento">
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary" onclick="addRequirement()">Agregar otro requerimiento</button>
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary" onclick="addSection()">Agregar otra sección</button>
+
+                <!-- Secciones del curso -->
+                <div class="row mb-3">
+                    <div class="col">
+                        <h3>Secciones del Curso</h3>
+                        <div id="sections" class="mb-3">
+                            <div class="section mb-3">
+                                <input type="text" class="form-control mb-2" name="section_title[]" placeholder="Título de la sección" required>
+                                <input type="url" class="form-control" name="video_url[]" placeholder="URL del video" required>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary" onclick="addSection()">Agregar otra sección</button>
+                    </div>
+                </div>
 
                 <!-- Botón para enviar formulario -->
-                <input type="submit" class="btn btn-primary" value="Crear Curso">
+                <div class="row">
+                    <div class="col text-center">
+                        <input type="submit" class="btn btn-primary" value="Crear Curso">
+                    </div>
+                </div>
             </form>
         </div>
     </div>
