@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <title>Mis Cursos</title>
+</head>
+<body>
+
+    <%- include('partials/navigation') %>
+
+           <!-- Mostrar mensajes flash solo si contienen texto -->
+           <% if (successMessage && successMessage.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <%= successMessage %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+
+        <% if (errorMessage && errorMessage.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <%= errorMessage %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+
+        <div class="container mt-5">
+            <h1 class="mb-4">Mis Cursos</h1>
+
+            <% if (courses.length > 0) { %>
+                <ul class="list-group">
+                    <% courses.forEach(course => { %>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="/course_details/<%= course.course_id %>" class="text-decoration-none"><%= course.name %></a>
+                            <span class="badge bg-primary rounded-pill">Detalles</span>
+                        </li>
+                    <% }); %>
+                </ul>
+            <% } else { %>
+                <div class="alert alert-info">
+                    No has creado ningún curso todavía.
+                </div>
+            <% } %>
+        </div>
+
+     <%- include('partials/footer') %>
+
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    </body>
+    </html>
