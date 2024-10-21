@@ -215,7 +215,6 @@ router.get("/create_course", isAuthenticated, async (req, res) => {
 });
 
 // Ruta POST para crear un curso (requiere autenticación)
-// Ruta POST para crear un curso (requiere autenticación)
 router.post('/create_course', isAuthenticated, async (req, res) => {
   const { name, description, language, cover_image, category, requirements, section_title, video_url } = req.body;
   const creator_id = req.session.userId;
@@ -227,29 +226,33 @@ router.post('/create_course', isAuthenticated, async (req, res) => {
       return res.redirect('/create_course');
     }
     
-    // Iniciar una transacción para que todo se ejecute correctamente o nada
+    // Iniciar una transacción
     await db.query('START TRANSACTION');
     
     // Insertar el curso en la tabla 'courses'
-    const result = await db.query(
+    const [result] = await db.query(
       'INSERT INTO courses (name, description, creation_date, creator_id, language, cover_image) VALUES (?, ?, NOW(), ?, ?, ?)',
       [name, description, creator_id, language, cover_image]
     );
-    const courseId = result.insertId; // Obtener el ID del curso recién creado
+
+    // Verificar si el curso se creó correctamente y obtener el ID
+    const courseId = result.insertId || result[0].insertId;  // Verifica varias estructuras de respuesta posibles
+    if (!courseId) {
+      throw new Error('Error al obtener el ID del curso insertado');
+    }
     console.log('Curso creado con ID:', courseId);
     
     // Asociar el curso a la categoría en la tabla intermedia 'course_categories'
     if (category) {
-      const categoryResult = await db.query('INSERT INTO course_categories (course_id, category_id) VALUES (?, ?)', [courseId, category]);
-      console.log('Curso asociado a la categoría:', categoryResult);
+      await db.query('INSERT INTO course_categories (course_id, category_id) VALUES (?, ?)', [courseId, category]);
+      console.log('Curso asociado a la categoría');
     }
     
     // Inserción de requerimientos en la tabla 'requirements'
     if (requirements && Array.isArray(requirements)) {
       for (let requirement of requirements) {
         if (requirement.trim()) {
-          const requirementResult = await db.query('INSERT INTO requirements (course_id, requirement_text) VALUES (?, ?)', [courseId, requirement]);
-          console.log('Requerimiento insertado:', requirementResult);
+          await db.query('INSERT INTO requirements (course_id, requirement_text) VALUES (?, ?)', [courseId, requirement]);
         }
       }
     }
@@ -258,8 +261,7 @@ router.post('/create_course', isAuthenticated, async (req, res) => {
     if (section_title && video_url && Array.isArray(section_title) && Array.isArray(video_url)) {
       for (let i = 0; i < section_title.length; i++) {
         if (section_title[i].trim() && video_url[i].trim()) {
-          const sectionResult = await db.query('INSERT INTO sections (course_id, title, video_url) VALUES (?, ?, ?)', [courseId, section_title[i], video_url[i]]);
-          console.log('Sección insertada:', sectionResult);
+          await db.query('INSERT INTO sections (course_id, title, video_url) VALUES (?, ?, ?)', [courseId, section_title[i], video_url[i]]);
         }
       }
     }
@@ -271,11 +273,13 @@ router.post('/create_course', isAuthenticated, async (req, res) => {
   } catch (err) {
     // Si ocurre un error, hacemos rollback
     await db.query('ROLLBACK');
-    console.error('Error al crear el curso:', err);
-    req.flash('errorMessage', 'Hubo un error al crear el curso.');
+    console.error('Error al crear el curso:', err.message);  // Imprimir el mensaje exacto del error
+    req.flash('errorMessage', `Hubo un error al crear el curso: ${err.message}`);
     res.redirect('/create_course');
   }
 });
+
+
 // Página de detalles de curso (requiere autenticación)
 router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;
