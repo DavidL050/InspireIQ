@@ -273,6 +273,13 @@ router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
   }
 });
 
+// ---- PAGINA DE COURSE PLAYER ----
+
+// Página de crear curso (requiere autenticación)
+router.get("/course_player", isAuthenticated, async (req, res) => {
+  res.render("course_player.ejs");
+});
+
 // ---- RUTAS DE ENROLLMENTS ----
 
 // Ruta POST para matricular a un usuario en un curso (solo para estudiantes)

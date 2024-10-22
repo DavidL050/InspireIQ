@@ -26,10 +26,12 @@
                 <!-- Mostrar u ocultar botones basados en la sesión del usuario -->
                 <% if (!userId) { %>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="modal" data-bs-target="#signupModal">Registrarse</a>
+                        <button class="btn-signup"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#signupModal" style="color: rgb(255, 255, 255); font-weight:400;">Registrarse</a></button>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="modal" data-bs-target="#signinModal">Iniciar Sesión</a>
+                        <button class = "btn-login">
+                            <a class="nav-link" data-bs-toggle="modal" data-bs-target="#signinModal" style="color: white; font-weight: 400;">Iniciar Sesión</a>
+                        </button>
                     </li>
                 <% } else { %>
                     <li class="nav-item">

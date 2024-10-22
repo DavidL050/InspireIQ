@@ -8,6 +8,6 @@ const connection = mysql.createPool({
     database: 'inspire_iq'
 });
 
-// No necesitas la conexión manual usando connect() porque mysql2/promise maneja las conexiones automáticamente.
+
 
 export default connection;

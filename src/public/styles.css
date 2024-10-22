@@ -468,7 +468,7 @@ body {
 
 /* Botón de la CTA */
 .cta-section .btn-primary {
-    background-color: #0056b3; /* Un azul más oscuro para el botón */
+    background-color: #0056b3; 
     border: none;
     padding: 15px 30px;
     border-radius: 25px;
@@ -477,10 +477,175 @@ body {
 }
 
 .cta-section .btn-primary:hover {
-    background-color: #004494; /* Azul más oscuro en hover */
+    background-color: #004494;
 }
 
 .button-container {
     display: flex;
     justify-content: space-between;
+}
+
+/*Styles for signup and login buttons*/
+
+.btn-signup {
+    background-color: rgb(70, 70, 70);
+    color: black;
+    border-radius: 15px;
+    cursor: pointer;
+    padding-inline: 10px;
+    margin-inline: 5px;
+    transition: all 0.3s ease-in-out;
+    border: 1px solid black;
+    box-shadow: 0 0 0 0 black;
+}
+  
+.btn-signup:hover {
+    transform: translateY(-4px) translateX(-2px);
+    box-shadow: 2px 5px 0 0 black;
+}
+
+.btn-signup:active {
+    transform: translateY(2px) translateX(1px);
+    box-shadow: 0 0 0 0 black;
+}
+
+.btn-login {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: black;
+    border-radius: 15px;
+    cursor: pointer;
+    padding-inline: 10px;
+    margin-inline: 5px;
+    transition: all 0.3s ease-in-out;
+    border: 1px solid black;
+    box-shadow: 0 0 0 0 black;
+}
+
+.btn-login:hover {
+    transform: translateY(-4px) translateX(-2px);
+    box-shadow: 2px 5px 0 0 black;
+}
+
+.btn-login:active {
+    transform: translateY(2px) translateX(1px);
+    box-shadow: 0 0 0 0 black;
+}
+/* CSS (player-styles.css) */
+.player-container {
+    background-color: #1e1e1e;
+    min-height: 100vh;
+    color: #ffffff;
+}
+
+.player-content {
+    display: flex;
+    height: 100vh;
+}
+
+.player-video-section {
+    flex: 1;
+    padding: 20px;
+    max-width: 75%;
+}
+
+.player-video-wrapper {
+    position: relative;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    height: 0;
+    overflow: hidden;
+}
+
+.player-video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.player-sidebar {
+    width: 25%;
+    background-color: #282f34;
+    border-left: 1px solid #282f34;
+    overflow-y: auto;
+}
+
+.player-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #3d3d3d;
+}
+
+.player-close-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.player-close-btn:hover {
+    color: #cccccc;
+}
+
+.player-accordion-item {
+    background-color: #282f34;
+    border-bottom: 1px solid #3d3d3d;
+}
+
+.player-accordion-button {
+    width: 100%;
+    padding: 15px;
+    background-color: transparent;
+    border: none;
+    font-size: 16pt;
+    color: #ffffff;
+    text-align: left;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.player-accordion-button:hover {
+    background-color: #3d3d3d;
+}
+
+.player-duration {
+    color: #888888;
+    font-size: 0.9em;
+}
+
+.player-accordion-body {
+    padding: 10px 15px;
+    background-color: #282f34;
+}
+
+.player-lesson {
+    padding: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+    background-color: #282f34;
+    border-bottom: 1px solid #3d3d3d;
+    border-radius: 4px;
+}
+
+.player-lesson:hover {
+    background-color: #444444;
+}
+
+.player-accordion-button::after {
+    content: '▼';
+    font-size: 12px;
+    margin-left: 10px;
+    transition: transform 0.3s;
+}
+
+.player-accordion-button.collapsed::after {
+    transform: rotate(-90deg);
 }
