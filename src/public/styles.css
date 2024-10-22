@@ -479,3 +479,8 @@ body {
 .cta-section .btn-primary:hover {
     background-color: #004494; /* Azul más oscuro en hover */
 }
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}

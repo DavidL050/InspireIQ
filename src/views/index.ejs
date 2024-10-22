@@ -20,7 +20,7 @@
         <div class="course-list">
             <% courses.forEach(course => { %>
             <div class="course-card">
-                <img src="<%= course.cover_image || '/images/default-cover.jpg' %>" alt="Imagen del curso">
+                <img src="<%= course.cover_image || '/logo.png' %>" alt="Imagen del curso">
                 <h3><%= course.name %></h3>
                 <p><%= course.description %></p>
                 <p>Por: <%= course.first_name %> <%= course.last_name %></p>
@@ -92,133 +92,139 @@
     <section class="cta-section">
         <h2>Empieza hoy mismo tu camino hacia el éxito</h2>
         <p>Regístrate ahora y obtén acceso a cientos de cursos.</p>
-        <!-- Este botón ahora abre el modal -->
-        <button type="button" class="cta btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
+        <!-- Este botón ahora abre el modal correcto -->
+        <button type="button" class="cta btn btn-primary" data-bs-toggle="modal" data-bs-target="#signupModal">
             ¡Regístrate Gratis!
         </button>
     </section>
-
+    
     <%- include('partials/footer') %>
 
-    <!-- Modal de Registro -->
-    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+   <!-- Modal para Registro -->
+<div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="signupModalLabel">Regístrate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Formulario de registro para estudiante -->
+                <form id="student-registration-form" action="/signup" method="POST">
+                    <input type="hidden" name="role" value="student">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombres</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lastname" class="form-label">Apellidos</label>
+                        <input type="text" class="form-control" id="lastname" name="lastname" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Registrarse como Estudiante</button>
+                    <button type="button" id="register-as-teacher" class="btn btn-secondary">Registrarse como Profesor</button>
+                </form>
+
+                <!-- Formulario de registro para profesor (escondido inicialmente) -->
+                <form id="teacher-registration-form" action="/signup" method="POST" style="display: none;">
+                    <input type="hidden" name="role" value="teacher">
+                    <div class="mb-3">
+                        <label for="teacher-name" class="form-label">Nombres</label>
+                        <input type="text" class="form-control" id="teacher-name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="teacher-lastname" class="form-label">Apellidos</label>
+                        <input type="text" class="form-control" id="teacher-lastname" name="lastname" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="teacher-email" class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="teacher-email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="teacher-password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="teacher-password" name="password" required>
+                    </div>
+                    <div class="button-container">
+                    <button type="submit" class="btn btn-primary">Registrarse como Profesor</button>
+                    <button type="button" id="back-to-student-form" class="btn btn-secondary">Volver</button>
+                    </div>
+                </form>
+
+                <p class="mt-3 text-center">¿Ya tienes una cuenta? <a href="#" id="openSigninModal">Inicia sesión aquí</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Modal para Iniciar Sesión -->
+    <div class="modal fade" id="signinModal" tabindex="-1" aria-labelledby="signinModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="registerModalLabel">Regístrate</h5>
+                    <h5 class="modal-title" id="signinModalLabel">Iniciar Sesión</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Formulario de registro para Estudiante -->
-                    <form id="student-registration-form" action="/signup" method="POST" class="needs-validation" novalidate>
-                        <input type="hidden" name="role" value="student">
+                    <form action="/signin" method="POST">
                         <div class="mb-3">
-                            <label for="name" class="form-label">Nombres</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                            <div class="invalid-feedback">Por favor ingresa tu nombre</div>
+                            <label for="signin-email" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="signin-email" name="email" required>
                         </div>
                         <div class="mb-3">
-                            <label for="lastname" class="form-label">Apellidos</label>
-                            <input type="text" class="form-control" id="lastname" name="lastname" required>
-                            <div class="invalid-feedback">Por favor ingresa tus apellidos</div>
+                            <label for="signin-password" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="signin-password" name="password" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Correo Electrónico</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                            <div class="invalid-feedback">Por favor ingresa un correo válido</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                            <div class="invalid-feedback">Por favor ingresa una contraseña</div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Registrarse como Estudiante</button>
-                        <button type="button" id="register-as-teacher" class="btn btn-secondary">Registrarse como Profesor</button>
-                    </form>
-
-                    <!-- Formulario de registro para Profesor -->
-                    <form id="teacher-registration-form" action="/signup" method="POST" class="needs-validation d-none" novalidate>
-                        <input type="hidden" name="role" value="teacher">
-                        <div class="mb-3">
-                            <label for="teacher-name" class="form-label">Nombres</label>
-                            <input type="text" class="form-control" id="teacher-name" name="name" required>
-                            <div class="invalid-feedback">Por favor ingresa tu nombre</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="teacher-lastname" class="form-label">Apellidos</label>
-                            <input type="text" class="form-control" id="teacher-lastname" name="lastname" required>
-                            <div class="invalid-feedback">Por favor ingresa tus apellidos</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="teacher-email" class="form-label">Correo Electrónico</label>
-                            <input type="email" class="form-control" id="teacher-email" name="email" required>
-                            <div class="invalid-feedback">Por favor ingresa un correo válido</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="teacher-password" class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="teacher-password" name="password" required>
-                            <div class="invalid-feedback">Por favor ingresa una contraseña</div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Registrarse como Profesor</button>
-                        <button type="button" id="back-to-student-form" class="btn btn-secondary">Volver al registro de Estudiante</button>
+                        <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                        <p class="mt-3">¿No tienes una cuenta? <a href="#" id="openSignupModal">Regístrate aquí</a></p>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Script para manejar los formularios -->
+    <!-- Include Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"></script>
+
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Obtener referencias a los formularios
-        const studentForm = document.getElementById('student-registration-form');
-        const teacherForm = document.getElementById('teacher-registration-form');
-        
-        // Validación de formularios
-        const forms = document.querySelectorAll('.needs-validation');
-        Array.from(forms).forEach(form => {
-            form.addEventListener('submit', function(event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                } else {
-                    console.log("Datos del formulario enviados: ", new FormData(form));
-                }
-                form.classList.add('was-validated');
-            });
-        });
-
-        // Cambiar al formulario de profesor
-        document.getElementById('register-as-teacher').addEventListener('click', function(e) {
-            e.preventDefault();
-            studentForm.classList.add('d-none');
-            teacherForm.classList.remove('d-none');
-            // Resetear validación
-            studentForm.classList.remove('was-validated');
-            teacherForm.classList.remove('was-validated');
-        });
-
-        // Cambiar al formulario de estudiante
-        document.getElementById('back-to-student-form').addEventListener('click', function() {
-            teacherForm.classList.add('d-none');
-            studentForm.classList.remove('d-none');
-            // Resetear validación
-            studentForm.classList.remove('was-validated');
-            teacherForm.classList.remove('was-validated');
-        });
-
-        // Reiniciar estado del modal cuando se cierre
-        const registerModal = document.getElementById('registerModal');
-        registerModal.addEventListener('hidden.bs.modal', function() {
-            teacherForm.classList.add('d-none');
-            studentForm.classList.remove('d-none');
-            // Resetear formularios y validación
-            studentForm.reset();
-            teacherForm.reset();
-            studentForm.classList.remove('was-validated');
-            teacherForm.classList.remove('was-validated');
-        });
+$(document).ready(function() {
+    // Cambiar entre formulario de estudiante y profesor
+    $('#register-as-teacher').click(function(e) {
+        e.preventDefault();
+        $('#student-registration-form').hide();
+        $('#teacher-registration-form').show();
     });
+
+    $('#back-to-student-form').click(function() {
+        $('#teacher-registration-form').hide();
+        $('#student-registration-form').show();
+    });
+
+    // Abrir el modal de inicio de sesión desde el modal de registro
+    $('#openSigninModal').click(function(event) {
+        event.preventDefault();
+        $('#signupModal').modal('hide');
+        $('#signinModal').modal('show');
+    });
+
+    // Abrir el modal de registro desde el modal de inicio de sesión
+    $('#openSignupModal').click(function(event) {
+        event.preventDefault();
+        $('#signinModal').modal('hide');
+        $('#signupModal').modal('show');
+    });
+});
+
     </script>
 </body>
 </html>
