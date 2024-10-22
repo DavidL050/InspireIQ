@@ -5,6 +5,13 @@ import db from './database.js';
 // Función para registrar un nuevo usuario
 async function registerUser(name, lastname, email, password, role) {
   try {
+
+      // Verificar si el email ya existe
+      const [existingUser] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+      if (existingUser.length > 0) {
+          throw new Error('El correo electrónico ya está registrado');
+      }
+      
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await db.query(
       'INSERT INTO users (first_name, last_name, email, password, role) VALUES (?, ?, ?, ?, ?)',

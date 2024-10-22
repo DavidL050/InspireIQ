@@ -23,9 +23,24 @@ function isAuthenticated(req, res, next) {
 // ---- RUTAS DE AUTENTICACIÓN ----
 
 // Página principal
-router.get("/", (req, res) => {
-  res.render("index.ejs");
+router.get("/", async (req, res) => {
+  try {
+      // Obtener algunos cursos destacados para la página principal
+      const query = `
+          SELECT courses.*, users.first_name, users.last_name
+          FROM courses
+          JOIN users ON courses.creator_id = users.user_id
+          LIMIT 3  -- Aquí mostramos solo 3 cursos destacados
+      `;
+      const [courses] = await db.query(query);
+      res.render("index", { courses });
+  } catch (err) {
+      console.error("Error al cargar la página principal:", err);
+      req.flash('errorMessage', 'Hubo un error al cargar la página principal.');
+      res.redirect('/');
+  }
 });
+
 
 // Página de registro
 router.get("/signup", (req, res) => {

@@ -83,19 +83,22 @@
                 document.getElementById('student-registration-form').style.display = 'none';
                 document.getElementById('teacher-registration-form').style.display = 'block';
             });
-
+    
             // Volver al formulario de estudiante
             document.getElementById('back-to-student-form').addEventListener('click', function() {
                 document.getElementById('teacher-registration-form').style.display = 'none';
                 document.getElementById('student-registration-form').style.display = 'block';
             });
-
-            // Redirigir al modal de inicio de sesión
-            document.getElementById('backToSignin').addEventListener('click', function(e) {
-                e.preventDefault();
-                window.location.href = '/signin';
+    
+            // Para asegurarse de que ambos formularios están ocultos/mostrados según corresponda al cerrar el modal
+            const registerModal = document.getElementById('registerModal');
+            registerModal.addEventListener('hidden.bs.modal', function() {
+                // Volver al formulario de estudiante al cerrar el modal
+                document.getElementById('teacher-registration-form').style.display = 'none';
+                document.getElementById('student-registration-form').style.display = 'block';
             });
         });
     </script>
+    
 </body>
 </html>

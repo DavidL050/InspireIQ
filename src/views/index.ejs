@@ -1,54 +1,224 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="https://i.ibb.co/g66kBGP/Logo.png" type="image/x-icon">
-    <title>InspireIQ</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>InspireIQ - Página Principal</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
-
 <body>
 
-        <%-include ('partials/navigation')%>
+    <header>
+        <%- include('partials/navigation') %>
+    </header>
 
-
+    <!-- Cursos Destacados -->
     <main>
-        <section class="recommended-courses">
-            <h2>Cursos Recomendados</h2>
-
+        <h2>Cursos Destacados</h2>
+        <div class="course-list">
+            <% courses.forEach(course => { %>
             <div class="course-card">
-                <img src="logo.png" alt="Curso Completo Python">
-                <div class="course-info">
-                    <h3>Curso Completo Python para Principiantes</h3>
-                    <p>Become a Python pro! 🚀 This comprehensive tutorial takes you from beginner to hero, covering the basics, machine learning, and web development projects.</p>
-                    <div class="course-meta">
-                        <span>By Mosh Hamedani</span>
-                        <span>Updated August 2024</span>
-                        <span>6 Total Hours - All Levels</span>
-                        <span>⭐ 4.7 (15,123)</span>
-                    </div>
-                </div>
+                <img src="<%= course.cover_image || '/images/default-cover.jpg' %>" alt="Imagen del curso">
+                <h3><%= course.name %></h3>
+                <p><%= course.description %></p>
+                <p>Por: <%= course.first_name %> <%= course.last_name %></p>
+                <a href="/course_details/<%= course.course_id %>">Ver detalles del curso</a>
             </div>
-
-            <div class="course-card">
-                <img src="logo.png" alt="Curso Completo JavaScript para Principiantes">
-                <div class="course-info">
-                    <h3>Curso Completo JavaScript - Principiante hasta Avanzado (2024)</h3>
-                    <p>In this JavaScript tutorial and JavaScript full course, learn to build complex websites with JavaScript, HTML, and CSS.</p>
-                    <div class="course-meta">
-                        <span>By Simon Bao</span>
-                        <span>Updated August 2024</span>
-                        <span>22 Total Hours - All Levels</span>
-                        <span>⭐ 4.7 (6,722)</span>
-                    </div>
-                </div>
-            </div>
-        </section>
+            <% }) %>
+        </div>
     </main>
 
+    <!-- Testimonios -->
+    <section class="testimonials">
+        <h2>Lo que dicen nuestros estudiantes</h2>
+        <div class="testimonial-list">
+            <div class="testimonial">
+                <img src="/img/student1.png" alt="Estudiante 1">
+                <blockquote>"¡InspireIQ ha transformado mi carrera profesional! Los cursos son detallados y fáciles de seguir."</blockquote>
+                <p>- Ana Pérez, Desarrolladora Full-Stack</p>
+            </div>
+            <div class="testimonial">
+                <img src="/img/student2.jpg" alt="Estudiante 2">
+                <blockquote>"He aprendido más en 3 meses aquí que en años de formación tradicional. ¡Altamente recomendado!"</blockquote>
+                <p>- Carlos García, Ingeniero de Software</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beneficios de la Plataforma -->
+    <section class="benefits">
+        <h2>¿Por qué elegir InspireIQ?</h2>
+        <div class="benefit-list">
+            <div class="benefit">
+                <i class="material-icons">laptop</i>
+                <h3>Cursos Actualizados</h3>
+                <p>Mantenemos nuestros cursos al día con las últimas tecnologías y herramientas del mercado.</p>
+            </div>
+            <div class="benefit">
+                <i class="material-icons">people</i>
+                <h3>Comunidad Activa</h3>
+                <p>Únete a una comunidad de miles de estudiantes que aprenden juntos.</p>
+            </div>
+            <div class="benefit">
+                <i class="material-icons">school</i>
+                <h3>Instructores Expertos</h3>
+                <p>Aprende de los mejores con cursos impartidos por profesionales en la industria.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Estadísticas de la Plataforma -->
+    <section class="statistics">
+        <h2>Nuestras estadísticas</h2>
+        <div class="stat-list">
+            <div class="stat">
+                <h3>+5,000</h3>
+                <p>Estudiantes inscritos</p>
+            </div>
+            <div class="stat">
+                <h3>+30</h3>
+                <p>Cursos disponibles</p>
+            </div>
+            <div class="stat">
+                <h3>+50</h3>
+                <p>Instructores certificados</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Llamada a la Acción Final -->
+    <section class="cta-section">
+        <h2>Empieza hoy mismo tu camino hacia el éxito</h2>
+        <p>Regístrate ahora y obtén acceso a cientos de cursos.</p>
+        <!-- Este botón ahora abre el modal -->
+        <button type="button" class="cta btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
+            ¡Regístrate Gratis!
+        </button>
+    </section>
+
     <%- include('partials/footer') %>
+
+    <!-- Modal de Registro -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registerModalLabel">Regístrate</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Formulario de registro para Estudiante -->
+                    <form id="student-registration-form" action="/signup" method="POST" class="needs-validation" novalidate>
+                        <input type="hidden" name="role" value="student">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nombres</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                            <div class="invalid-feedback">Por favor ingresa tu nombre</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lastname" class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" id="lastname" name="lastname" required>
+                            <div class="invalid-feedback">Por favor ingresa tus apellidos</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="invalid-feedback">Por favor ingresa un correo válido</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <div class="invalid-feedback">Por favor ingresa una contraseña</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Registrarse como Estudiante</button>
+                        <button type="button" id="register-as-teacher" class="btn btn-secondary">Registrarse como Profesor</button>
+                    </form>
+
+                    <!-- Formulario de registro para Profesor -->
+                    <form id="teacher-registration-form" action="/signup" method="POST" class="needs-validation d-none" novalidate>
+                        <input type="hidden" name="role" value="teacher">
+                        <div class="mb-3">
+                            <label for="teacher-name" class="form-label">Nombres</label>
+                            <input type="text" class="form-control" id="teacher-name" name="name" required>
+                            <div class="invalid-feedback">Por favor ingresa tu nombre</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="teacher-lastname" class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" id="teacher-lastname" name="lastname" required>
+                            <div class="invalid-feedback">Por favor ingresa tus apellidos</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="teacher-email" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="teacher-email" name="email" required>
+                            <div class="invalid-feedback">Por favor ingresa un correo válido</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="teacher-password" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="teacher-password" name="password" required>
+                            <div class="invalid-feedback">Por favor ingresa una contraseña</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Registrarse como Profesor</button>
+                        <button type="button" id="back-to-student-form" class="btn btn-secondary">Volver al registro de Estudiante</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script para manejar los formularios -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener referencias a los formularios
+        const studentForm = document.getElementById('student-registration-form');
+        const teacherForm = document.getElementById('teacher-registration-form');
+        
+        // Validación de formularios
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                } else {
+                    console.log("Datos del formulario enviados: ", new FormData(form));
+                }
+                form.classList.add('was-validated');
+            });
+        });
+
+        // Cambiar al formulario de profesor
+        document.getElementById('register-as-teacher').addEventListener('click', function(e) {
+            e.preventDefault();
+            studentForm.classList.add('d-none');
+            teacherForm.classList.remove('d-none');
+            // Resetear validación
+            studentForm.classList.remove('was-validated');
+            teacherForm.classList.remove('was-validated');
+        });
+
+        // Cambiar al formulario de estudiante
+        document.getElementById('back-to-student-form').addEventListener('click', function() {
+            teacherForm.classList.add('d-none');
+            studentForm.classList.remove('d-none');
+            // Resetear validación
+            studentForm.classList.remove('was-validated');
+            teacherForm.classList.remove('was-validated');
+        });
+
+        // Reiniciar estado del modal cuando se cierre
+        const registerModal = document.getElementById('registerModal');
+        registerModal.addEventListener('hidden.bs.modal', function() {
+            teacherForm.classList.add('d-none');
+            studentForm.classList.remove('d-none');
+            // Resetear formularios y validación
+            studentForm.reset();
+            teacherForm.reset();
+            studentForm.classList.remove('was-validated');
+            teacherForm.classList.remove('was-validated');
+        });
+    });
+    </script>
 </body>
 </html>
