@@ -334,4 +334,12 @@ router.post('/add_resource', isAuthenticated, async (req, res) => {
   }
 });
 
+
+// ---- PAGINA DE COURSE PLAYER ----
+
+// Página de crear curso (requiere autenticación)
+router.get("/course_player", isAuthenticated, async (req, res) => {
+  res.render("course_player.ejs");
+});
+
 export default router;
