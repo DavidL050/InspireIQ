@@ -280,9 +280,6 @@ router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
 });
 
 // ---- PAGINA DE COURSE PLAYER ----
-
-// Página de reproductor de curso (requiere autenticación)
-// Ruta para el reproductor de curso (course_player)
 router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;
 
@@ -297,23 +294,51 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
     }
 
     // Consulta para obtener las secciones del curso
-    const [sections] = await db.query('SELECT * FROM sections WHERE course_id = ?', [courseId]);
+    const [sections] = await db.query('SELECT section_id, course_id, title, video_url FROM sections WHERE course_id = ?', [courseId]);
+
+    // Transformar las URLs de YouTube para que sean reproducibles en iframe
+    const processedSections = sections.map(section => ({
+      ...section,
+      video_url: transformYouTubeUrl(section.video_url)
+    }));
 
     // Consulta para obtener las valoraciones del curso
     const [ratings] = await db.query('SELECT * FROM ratings WHERE course_id = ?', [courseId]);
 
-    // Renderizar la página del reproductor de curso con los detalles del curso, secciones y valoraciones
+    // Renderizar la página del reproductor de curso
     res.render("course_player.ejs", {
-      course: courseDetails[0],   // El curso siempre existirá si pasa la verificación
-      sections: sections,         // Pueden existir o no secciones, pero seguimos mostrando el curso
-      ratings: ratings            // Pueden no existir valoraciones, y eso está bien
+      course: courseDetails[0],
+      sections: processedSections,
+      ratings: ratings
     });
   } catch (err) {
-    // Manejo de errores
     console.error(err);
     res.status(500).json({ error: 'Error en el servidor al cargar el reproductor del curso' });
   }
 });
+
+// Función auxiliar para transformar URLs de YouTube
+function transformYouTubeUrl(url) {
+  try {
+    if (!url) return '';
+    
+    // Extraer el ID del video de YouTube
+    let videoId = '';
+    const urlObj = new URL(url);
+    
+    if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
+      videoId = urlObj.searchParams.get('v');
+    } else if (urlObj.hostname === 'youtu.be') {
+      videoId = urlObj.pathname.substring(1);
+    }
+    
+    // Retornar la URL embebible de YouTube
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  } catch (e) {
+    console.error('Error transformando URL:', e);
+    return '';
+  }
+}
 
 
 // ---- RUTAS DE ENROLLMENTS ----

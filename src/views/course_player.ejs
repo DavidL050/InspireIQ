@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,42 +19,33 @@
             <!-- Video Section -->
             <div class="player-video-section">
                 <div class="player-video-wrapper">
-                    <% if (sections.length > 0 && sections[0].video_url.includes("http")) { %>
-                        <iframe src="<%= sections[0].video_url %>" title="<%= course.name %> video"
+                    <% if (sections.length > 0 && sections[0].video_url) { %>
+                        <iframe 
+                            id="videoPlayer"
+                            src="<%= sections[0].video_url %>"
+                            title="Video del curso"
                             frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowfullscreen>
                         </iframe>
                     <% } else { %>
-                        <p>No hay videos disponibles para este curso o el enlace no es válido.</p>
+                        <div class="alert alert-info">
+                            No hay videos disponibles para este curso.
+                        </div>
                     <% } %>
                 </div>
 
-                <!-- Detalles del curso -->
+                <!-- Course Details -->
                 <div class="mt-4">
                     <h2 class="player-course-title"><%= course.name %></h2>
-                    <p class="player-course-description"><%= course.description %></p>
-                    <p><strong>Fecha de creación:</strong> <%= new Date(course.creation_date).toLocaleDateString() %></p>
-                    <p><strong>Idioma:</strong> <%= course.language %></p>
+                    <hr>
+                    <h4> Sección: <%= sections.length > 0 ? sections[0].title : '' %> </h4>
+                    <h5 class="player-course-description">Descripción: <%= course.description %></h5>
+                    <h6><strong>Creado:</strong> <%= new Date(course.creation_date).toLocaleDateString() %></h6>
+                    <h6><strong>Idioma:</strong> <%= course.language %></h6>
                 </div>
 
-                <!-- Sección de valoraciones -->
-                <div class="mt-5">
-                    <h3>Valoraciones</h3>
-                    <% if (ratings.length > 0) { %>
-                        <% ratings.forEach((rating) => { %>
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <p><strong>Calificación:</strong> <%= rating.rating %> estrellas</p>
-                                    <p><strong>Comentario:</strong> <%= rating.comment %></p>
-                                    <p><small><strong>Fecha:</strong> <%= new Date(rating.created_at).toLocaleDateString() %></small></p>
-                                </div>
-                            </div>
-                        <% }); %>
-                    <% } else { %>
-                        <p>No hay valoraciones para este curso todavía.</p>
-                    <% } %>
-                </div>
+
             </div>
 
             <!-- Course Content Sidebar -->
@@ -67,17 +57,15 @@
 
                 <div class="player-accordion" id="courseAccordion">
                     <% sections.forEach((section, index) => { %>
-                        <div class="player-accordion-item mb-2">
-                            <h2 class="player-accordion-header">
-                                <button class="player-accordion-button" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#section<%= index %>">
-                                    <%= section.title %> <span class="player-duration">45min</span>
+                        <div class="player-accordion-item mb-2" data-section-id="<%= section.section_id %>">
+                            <div class="player-section-header d-flex justify-content-between align-items-center p-3">
+                                <button 
+                                    class="btn btn-link text-white text-decoration-none video-selector w-100 text-start"
+                                    data-video-url="<%= section.video_url %>"
+                                    data-section-title="<%= section.title %>"
+                                    onclick="changeVideo(this)">
+                                    <%= section.title %>
                                 </button>
-                            </h2>
-                            <div id="section<%= index %>" class="player-accordion-collapse collapse">
-                                <div class="player-accordion-body">
-                                    <a href="<%= section.video_url %>" class="btn btn-primary btn-sm" target="_blank">Ver video</a>
-                                </div>
                             </div>
                         </div>
                     <% }); %>
@@ -87,8 +75,33 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function changeVideo(button) {
+            // Actualizar el video
+            const videoUrl = button.getAttribute('data-video-url');
+            const sectionTitle = button.getAttribute('data-section-title');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const titleElement = document.getElementById('currentSectionTitle');
 
-    <%- include('partials/footer') %>
+            if (videoUrl) {
+                videoPlayer.src = videoUrl;
+                titleElement.textContent = sectionTitle;
+
+                // Remover clase activa de todos los botones
+                document.querySelectorAll('.video-selector').forEach(btn => {
+                    btn.parentElement.classList.remove('active-section');
+                });
+
+                // Agregar clase activa al botón seleccionado
+                button.parentElement.classList.add('active-section');
+            }
+        }
+    </script>
+
+<%- include('partials/footer') %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 
 </html>
