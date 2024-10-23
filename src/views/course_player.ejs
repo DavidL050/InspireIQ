@@ -4,155 +4,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cursos de Desarrollo - InspireIQ</title>
+    <title><%= course.name %> - InspireIQ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
 </head>
 
-<body>
+<body class="bg-dark text-white">
     <header>
         <%- include('partials/navigation') %>
     </header>
 
     <div class="player-container">
-        <div class="player-content d-flex">
+        <div class="player-content">
             <!-- Video Section -->
             <div class="player-video-section">
                 <div class="player-video-wrapper">
-                    <iframe src="https://www.youtube.com/embed/ix9cRaBkVe0?si=Vgx8RWexSvbmamhv"
-                        title="YouTube video player" frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowfullscreen>
-                    </iframe>
+                    <% if (sections.length > 0 && sections[0].video_url.includes("http")) { %>
+                        <iframe src="<%= sections[0].video_url %>" title="<%= course.name %> video"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                        </iframe>
+                    <% } else { %>
+                        <p>No hay videos disponibles para este curso o el enlace no es válido.</p>
+                    <% } %>
                 </div>
 
-                <div class="player-course-info mt-4">
-                    <!-- Title -->
-                    <h2 class="player-course-title">Curso de Python: De Principiante a Experto</h2>
-
-                    <!-- Description -->
-                    <p class="player-course-description">Este curso cubre todos los aspectos de Python, desde lo más
-                        básico hasta técnicas avanzadas. Perfecto para quienes buscan aprender o mejorar sus habilidades
-                        en programación.</p>
-
-                    <!-- Duration -->
-                    <p class="player-course-duration">Duración: 8 horas</p>
-
-                    <!-- Rating -->
-                    <div class="player-course-rating d-flex align-items-center">
-                        <!-- Stars -->
-                        <span class="material-icons" style="color: yellow;">star</span>
-                        <span class="material-icons" style="color: yellow;">star</span>
-                        <span class="material-icons" style="color: yellow;">star</span>
-                        <span class="material-icons" style="color: yellow;">star</span>
-                        <span class="material-icons" style="color: yellow;">star_half</span>
-
-                        <!-- Number of Ratings -->
-                        <span class="player-course-rating-count ms-2" style="color: yellow;">(5127 valoraciones)</span>
-                    </div>
-
+                <!-- Detalles del curso -->
+                <div class="mt-4">
+                    <h2 class="player-course-title"><%= course.name %></h2>
+                    <p class="player-course-description"><%= course.description %></p>
+                    <p><strong>Fecha de creación:</strong> <%= new Date(course.creation_date).toLocaleDateString() %></p>
+                    <p><strong>Idioma:</strong> <%= course.language %></p>
                 </div>
 
+                <!-- Sección de valoraciones -->
+                <div class="mt-5">
+                    <h3>Valoraciones</h3>
+                    <% if (ratings.length > 0) { %>
+                        <% ratings.forEach((rating) => { %>
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <p><strong>Calificación:</strong> <%= rating.rating %> estrellas</p>
+                                    <p><strong>Comentario:</strong> <%= rating.comment %></p>
+                                    <p><small><strong>Fecha:</strong> <%= new Date(rating.created_at).toLocaleDateString() %></small></p>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <p>No hay valoraciones para este curso todavía.</p>
+                    <% } %>
+                </div>
             </div>
 
-            <!-- Course Content Section -->
+            <!-- Course Content Sidebar -->
             <div class="player-sidebar">
                 <div class="player-sidebar-header">
-                    <h5>Course content</h5>
+                    <h5>Contenido del curso</h5>
                     <button type="button" class="player-close-btn">&times;</button>
                 </div>
 
                 <div class="player-accordion" id="courseAccordion">
-                    <!-- Section 1 -->
-                    <div class="player-accordion-item">
-                        <h2 class="player-accordion-header">
-                            <button class="player-accordion-button" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#section1">
-                                Section 1: Introduction to Programming
-                                <span class="player-duration">45min</span>
-                            </button>
-                        </h2>
-                        <div id="section1" class="player-accordion-collapse collapse">
-                            <div class="player-accordion-body">
-                                <div class="player-lesson">Lesson 1: Getting Started</div>
-                                <div class="player-lesson">Lesson 2: Basic Concepts</div>
-                                <div class="player-lesson">Lesson 3: First Program</div>
+                    <% sections.forEach((section, index) => { %>
+                        <div class="player-accordion-item mb-2">
+                            <h2 class="player-accordion-header">
+                                <button class="player-accordion-button" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#section<%= index %>">
+                                    <%= section.title %> <span class="player-duration">45min</span>
+                                </button>
+                            </h2>
+                            <div id="section<%= index %>" class="player-accordion-collapse collapse">
+                                <div class="player-accordion-body">
+                                    <a href="<%= section.video_url %>" class="btn btn-primary btn-sm" target="_blank">Ver video</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Section 2 -->
-                    <div class="player-accordion-item">
-                        <h2 class="player-accordion-header">
-                            <button class="player-accordion-button" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#section2">
-                                Section 2: Variables and Data Types
-                                <span class="player-duration">50min</span>
-                            </button>
-                        </h2>
-                        <div id="section2" class="player-accordion-collapse collapse">
-                            <div class="player-accordion-body">
-                                <div class="player-lesson">Lesson 1: Understanding Variables</div>
-                                <div class="player-lesson">Lesson 2: Working with Data Types</div>
-                                <div class="player-lesson">Lesson 3: Type Conversion</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section 3 -->
-                    <div class="player-accordion-item">
-                        <h2 class="player-accordion-header">
-                            <button class="player-accordion-button" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#section3">
-                                Section 3: Control Flow
-                                <span class="player-duration">55min</span>
-                            </button>
-                        </h2>
-                        <div id="section3" class="player-accordion-collapse collapse">
-                            <div class="player-accordion-body">
-                                <div class="player-lesson">Lesson 1: If Statements</div>
-                                <div class="player-lesson">Lesson 2: Loops</div>
-                                <div class="player-lesson">Lesson 3: Functions</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section 4 -->
-                    <div class="player-accordion-item">
-                        <h2 class="player-accordion-header">
-                            <button class="player-accordion-button" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#section4">
-                                Section 4: Data Structures
-                                <span class="player-duration">40min</span>
-                            </button>
-                        </h2>
-                        <div id="section4" class="player-accordion-collapse collapse">
-                            <div class="player-accordion-body">
-                                <div class="player-lesson">Lesson 1: Lists</div>
-                                <div class="player-lesson">Lesson 2: Dictionaries</div>
-                                <div class="player-lesson">Lesson 3: Sets</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section 5 -->
-                    <div class="player-accordion-item">
-                        <h2 class="player-accordion-header">
-                            <button class="player-accordion-button" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#section5">
-                                Section 5: Advanced Topics
-                                <span class="player-duration">60min</span>
-                            </button>
-                        </h2>
-                        <div id="section5" class="player-accordion-collapse collapse">
-                            <div class="player-accordion-body">
-                                <div class="player-lesson">Lesson 1: Object-Oriented Programming</div>
-                                <div class="player-lesson">Lesson 2: Error Handling</div>
-                                <div class="player-lesson">Lesson 3: File Operations</div>
-                            </div>
-                        </div>
-                    </div>
+                    <% }); %>
                 </div>
             </div>
         </div>
@@ -160,15 +88,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-
-
-
     <%- include('partials/footer') %>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
-
-
-
 
 </html>

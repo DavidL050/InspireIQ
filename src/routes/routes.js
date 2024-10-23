@@ -262,23 +262,59 @@ router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;
 
   try {
+    // Consulta para obtener los detalles del curso
     const [courseDetails] = await db.query('SELECT * FROM courses WHERE course_id = ?', [courseId]);
+
+    // Validar si el curso existe
     if (courseDetails.length === 0) {
       req.flash('errorMessage', 'El curso no existe.');
       return res.redirect('/my_courses');
     }
+
+    // Renderizar la vista de detalles del curso
     res.render("course_details.ejs", { course: courseDetails[0] });
   } catch (err) {
+    // Manejo de errores
     res.status(500).json({ error: 'Error en el servidor al cargar los detalles del curso' });
   }
 });
 
 // ---- PAGINA DE COURSE PLAYER ----
 
-// Página de crear curso (requiere autenticación)
-router.get("/course_player", isAuthenticated, async (req, res) => {
-  res.render("course_player.ejs");
+// Página de reproductor de curso (requiere autenticación)
+// Ruta para el reproductor de curso (course_player)
+router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
+  const { courseId } = req.params;
+
+  try {
+    // Consulta para obtener los detalles del curso
+    const [courseDetails] = await db.query('SELECT * FROM courses WHERE course_id = ?', [courseId]);
+
+    // Verificar si el curso existe
+    if (courseDetails.length === 0) {
+      req.flash('errorMessage', 'El curso no existe.');
+      return res.redirect('/my_courses');
+    }
+
+    // Consulta para obtener las secciones del curso
+    const [sections] = await db.query('SELECT * FROM sections WHERE course_id = ?', [courseId]);
+
+    // Consulta para obtener las valoraciones del curso
+    const [ratings] = await db.query('SELECT * FROM ratings WHERE course_id = ?', [courseId]);
+
+    // Renderizar la página del reproductor de curso con los detalles del curso, secciones y valoraciones
+    res.render("course_player.ejs", {
+      course: courseDetails[0],   // El curso siempre existirá si pasa la verificación
+      sections: sections,         // Pueden existir o no secciones, pero seguimos mostrando el curso
+      ratings: ratings            // Pueden no existir valoraciones, y eso está bien
+    });
+  } catch (err) {
+    // Manejo de errores
+    console.error(err);
+    res.status(500).json({ error: 'Error en el servidor al cargar el reproductor del curso' });
+  }
 });
+
 
 // ---- RUTAS DE ENROLLMENTS ----
 
