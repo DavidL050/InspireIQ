@@ -15,21 +15,23 @@
     </header>
 
     <!-- Cursos Destacados -->
-    <main>
-        <h2>Cursos Destacados</h2>
+    <main class="container mt-5">
+        <h2 class="mb-4">Cursos Destacados</h2>
         <div class="course-list">
             <% courses.forEach(course => { %>
             <div class="course-card">
                 <img src="<%= course.cover_image || '/logo.png' %>" alt="Imagen del curso">
-                <h3><%= course.name %></h3>
-                <p><%= course.description %></p>
-                <p>Por: <%= course.first_name %> <%= course.last_name %></p>
-                <a href="/course_details/<%= course.course_id %>">Ver detalles del curso</a>
+                <div class="course-content">
+                    <h3><%= course.name %></h3>
+                    <p><%= course.description %></p>
+                    <p class="course-info">Por: <%= course.first_name %> <%= course.last_name %></p>
+                    <a href="/course_details/<%= course.course_id %>">Ver detalles del curso</a>
+                </div>
             </div>
             <% }) %>
         </div>
     </main>
-
+    
     <!-- Testimonios -->
     <section class="testimonials">
         <h2>Lo que dicen nuestros estudiantes</h2>

@@ -97,6 +97,16 @@
                 button.parentElement.classList.add('active-section');
             }
         }
+         // Función para ocultar la barra lateral y expandir el video
+         document.getElementById('closeSidebar').addEventListener('click', function() {
+            const sidebar = document.getElementById('courseSidebar');
+            const videoSection = document.querySelector('.player-video-section');
+            
+            sidebar.classList.add('hidden-sidebar');
+            videoSection.classList.add('full-screen-video');
+        });
+    
+
     </script>
 
 <%- include('partials/footer') %>
