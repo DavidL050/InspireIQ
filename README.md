@@ -29,13 +29,13 @@ InspireIQ es una plataforma de aprendizaje digital innovadora que transforma el 
 
 - Node.js (v18 o superior)
 - MySQL (v8 o superior)
-- npm o yarn
+- npm
 
 ## 🛠️ Instalación
 
 1. Clona el repositorio:
 ```bash
-git clone https://github.com/tu-usuario/inspireiq.git
+git clone https://github.com/DavidL050/InspireIQ.git
 ```
 
 2. Instala las dependencias:
@@ -46,12 +46,12 @@ npm install
 
 3. Inicia el servidor:
 ```bash
-npm start
+nodemon src/server.js
 ```
 
 ## 💡 Uso
 
-1. Accede a `http://localhost:3000` en tu navegador
+1. Accede a `http://localhost:4000` en tu navegador
 2. Regístrate como nuevo usuario o inicia sesión
 3. Explora los cursos disponibles
 4. ¡Comienza a aprender!
