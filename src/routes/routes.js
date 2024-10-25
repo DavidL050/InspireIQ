@@ -262,7 +262,7 @@ router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;
 
   try {
-    // Consulta para obtener los detalles del curso
+    // Obtener los detalles del curso
     const [courseDetails] = await db.query('SELECT * FROM courses WHERE course_id = ?', [courseId]);
 
     // Validar si el curso existe
@@ -271,8 +271,22 @@ router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
       return res.redirect('/my_courses');
     }
 
-    // Renderizar la vista de detalles del curso
-    res.render("course_details.ejs", { course: courseDetails[0] });
+    // Obtener solo las 3 calificaciones más recientes
+    const [ratings] = await db.query('SELECT r.rating, r.comment, r.created_at, u.first_name, u.last_name FROM ratings r JOIN users u ON r.user_id = u.user_id WHERE r.course_id = ? ORDER BY r.created_at DESC LIMIT 3', [courseId]);
+
+    // Obtener el promedio de las calificaciones
+    const [averageRatingResult] = await db.query('SELECT AVG(rating) as averageRating FROM ratings WHERE course_id = ?', [courseId]);
+    const averageRating = averageRatingResult[0].averageRating || 0;
+
+  
+    // Renderizar la vista
+    res.render("course_details.ejs", {
+      course: courseDetails[0],
+      ratings: ratings, // Las 3 calificaciones más recientes
+      averageRating: averageRating, // El promedio de calificaciones
+      courseId: courseId,
+      user: req.session.userId // Necesario para el formulario
+    });
   } catch (err) {
     // Manejo de errores
     res.status(500).json({ error: 'Error en el servidor al cargar los detalles del curso' });
@@ -285,7 +299,12 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
 
   try {
     // Consulta para obtener los detalles del curso
-    const [courseDetails] = await db.query('SELECT * FROM courses WHERE course_id = ?', [courseId]);
+    const [courseDetails] = await db.query(`
+      SELECT courses.*, categories.name AS category
+      FROM courses
+      LEFT JOIN course_categories ON courses.course_id = course_categories.course_id
+      LEFT JOIN categories ON course_categories.category_id = categories.category_id
+      WHERE courses.course_id = ?`, [courseId]);
 
     // Verificar si el curso existe
     if (courseDetails.length === 0) {
@@ -299,21 +318,29 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
     // Transformar las URLs de YouTube para que sean reproducibles en iframe
     const processedSections = sections.map(section => ({
       ...section,
-      video_url: transformYouTubeUrl(section.video_url)
+      video_url: transformYouTubeUrl(section.video_url) // Usamos la función transformYouTubeUrl aquí
     }));
 
     // Consulta para obtener las valoraciones del curso
-    const [ratings] = await db.query('SELECT * FROM ratings WHERE course_id = ?', [courseId]);
+    const [ratings] = await db.query('SELECT r.rating, r.comment, r.created_at, u.first_name, u.last_name FROM ratings r JOIN users u ON r.user_id = u.user_id WHERE r.course_id = ?', [courseId]);
+
+    // Consulta para obtener el promedio de las calificaciones
+    const [averageRatingResult] = await db.query('SELECT AVG(rating) AS averageRating, COUNT(*) AS totalRatings FROM ratings WHERE course_id = ?', [courseId]);
+    const { averageRating = 0, totalRatings = 0 } = averageRatingResult[0] || {};
 
     // Renderizar la página del reproductor de curso
     res.render("course_player.ejs", {
-      course: courseDetails[0],
-      sections: processedSections,
-      ratings: ratings
+      course: courseDetails[0],          // Detalles del curso
+      sections: processedSections,        // Secciones procesadas
+      ratings,                            // Valoraciones
+      averageRating,                      // Promedio de valoraciones
+      totalRatings,                       // Total de valoraciones
+      user: req.session.user              // Información del usuario autenticado
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error en el servidor al cargar el reproductor del curso' });
+    console.error('Error al cargar la página del curso:', err);
+    req.flash('errorMessage', 'Hubo un problema al cargar la página del curso.');
+    res.redirect('/my_courses');
   }
 });
 
@@ -321,7 +348,7 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
 function transformYouTubeUrl(url) {
   try {
     if (!url) return '';
-    
+
     // Extraer el ID del video de YouTube
     let videoId = '';
     const urlObj = new URL(url);
@@ -331,14 +358,16 @@ function transformYouTubeUrl(url) {
     } else if (urlObj.hostname === 'youtu.be') {
       videoId = urlObj.pathname.substring(1);
     }
-    
+
     // Retornar la URL embebible de YouTube
     return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
   } catch (e) {
-    console.error('Error transformando URL:', e);
+    console.error('Error transformando URL de YouTube:', e);
     return '';
   }
 }
+
+
 
 
 // ---- RUTAS DE ENROLLMENTS ----
@@ -377,11 +406,13 @@ router.post('/rate_course', isAuthenticated, async (req, res) => {
   const { course_id, user_id, rating, comment } = req.body;
 
   try {
+    // Verificar que todos los campos obligatorios estén presentes
     if (!course_id || !user_id || !rating) {
       req.flash('errorMessage', 'Faltan campos obligatorios.');
       return res.redirect('back');
     }
 
+    // Insertar la calificación en la base de datos
     await db.query(
       'INSERT INTO ratings (course_id, user_id, rating, comment, created_at) VALUES (?, ?, ?, ?, NOW())',
       [course_id, user_id, rating, comment]
@@ -394,6 +425,7 @@ router.post('/rate_course', isAuthenticated, async (req, res) => {
     res.redirect('back');
   }
 });
+
 
 // ---- RUTAS DE RESOURCES ----
 
