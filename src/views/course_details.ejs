@@ -3,10 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <title>Detalles del Curso</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f9;
+        }
+        .course-header {
+            background-color: #343a40;
+            color: #fff;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .course-header h2 {
+            font-weight: bold;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .course-cover img {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        .btn-lg {
+            background-color: #007bff;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-lg:hover {
+            background-color: #0056b3;
+        }
+        .btn-lg:focus {
+            box-shadow: none;
+        }
+    </style>
 </head>
 <body>
 
@@ -14,43 +57,41 @@
     <%- include('partials/navigation') %>
 
     <div class="container mt-5">
-        <h1 class="mb-4">Detalles del Curso</h1>
-
-        <!-- Verifica si existe el curso y muestra la información -->
-        <% if (course) { %>
-            <div class="card">
-                <div class="card-header">
+        <div class="card">
+            <!-- Cabecera del curso -->
+            <% if (course) { %>
+                <div class="course-header">
                     <h2><%= course.name %></h2>
                 </div>
                 <div class="card-body">
+                    <!-- Mostrar imagen del curso si existe -->
+                    <% if (course.cover_image) { %>
+                        <div class="course-cover mb-4">
+                            <img src="<%= course.cover_image %>" alt="Portada del curso" class="img-fluid">
+                        </div>
+                    <% } %>
+
+                    <!-- Descripción del curso -->
                     <p><strong>Descripción:</strong> <%= course.description %></p>
                     <p><strong>Idioma:</strong> <%= course.language %></p>
                     <p><strong>Fecha de creación:</strong> <%= new Date(course.creation_date).toLocaleDateString() %></p>
-                    
-                    <!-- Mostrar imagen del curso si existe -->
-                    <% if (course.cover_image) { %>
-                        <div class="mb-4">
-                            <img src="<%= course.cover_image %>" alt="Portada del curso" class="img-fluid rounded">
-                        </div>
-                    <% } %>
-                </div>
-            </div>
 
-            <!-- Botón "Comenzar" que redirige al course_player -->
-            <div class="text-center mt-4">
-                <a href="/course_player/<%= course.course_id %>" class="btn btn-primary btn-lg">Comenzar</a>
-            </div>
-        <% } else { %>
-            <!-- Mensaje de advertencia si no se encuentran los detalles del curso -->
-            <div class="alert alert-warning">No se encontraron detalles para este curso.</div>
-        <% } %>
+                    <!-- Botón "Comenzar" que redirige al course_player -->
+                    <div class="text-center mt-4">
+                        <a href="/course_player/<%= course.course_id %>" class="btn btn-primary btn-lg">Comenzar</a>
+                    </div>
+                </div>
+            <% } else { %>
+                <!-- Mensaje de advertencia si no se encuentran los detalles del curso -->
+                <div class="alert alert-warning">No se encontraron detalles para este curso.</div>
+            <% } %>
+        </div>
     </div>
-    
 
     <!-- Pie de página -->
     <%- include('partials/footer') %>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -95,7 +95,7 @@ router.post("/signin", async (req, res) => {
 router.get("/logout", async (req, res) => {
   try {
     await logoutUser(req);
-    res.redirect('/signin');
+    res.redirect('/');
   } catch (err) {
     res.status(500).json({ error: 'Error en el servidor al cerrar sesión' });
   }

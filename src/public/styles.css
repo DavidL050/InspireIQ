@@ -1008,7 +1008,7 @@ footer {
     margin-right: 5px; /* Espacio entre el icono y el texto */
     color: white; /* Cambia el color del icono si lo deseas */
 }
-=======
+
 .player-accordion-button.collapsed::after {
     transform: rotate(-90deg);
 }
