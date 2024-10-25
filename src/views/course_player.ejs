@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= course.name %> - InspireIQ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
 </head>
@@ -14,20 +15,25 @@
         <%- include('partials/navigation') %>
     </header>
 
-    <div class="player-container">
-        <div class="player-content">
+    <div class="container-fluid player-container">
+        <div class="row player-content">
             <!-- Video Section -->
-            <div class="player-video-section">
-                <div class="player-video-wrapper">
+            <div class="col-md-9 player-video-section" id="videoSection">
+                <div class="player-video-wrapper position-relative">
                     <% if (sections.length > 0 && sections[0].video_url) { %>
                         <iframe 
                             id="videoPlayer"
                             src="<%= sections[0].video_url %>"
                             title="Video del curso"
+                            class="w-100"
                             frameborder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowfullscreen>
                         </iframe>
+                        <!-- Botón para mostrar sidebar en móviles -->
+                        <button id="showSidebar" class="btn btn-light position-absolute top-0 end-0 m-2 d-md-none">
+                            <i class="fas fa-list"></i>
+                        </button>
                     <% } else { %>
                         <div class="alert alert-info">
                             No hay videos disponibles para este curso.
@@ -36,35 +42,146 @@
                 </div>
 
                 <!-- Course Details -->
-                <div class="mt-4">
+                <div class="mt-4 course-info">
                     <h2 class="player-course-title"><%= course.name %></h2>
                     <hr>
-                    <h4> Sección: <%= sections.length > 0 ? sections[0].title : '' %> </h4>
-                    <h5 class="player-course-description">Descripción: <%= course.description %></h5>
-                    <h6><strong>Creado:</strong> <%= new Date(course.creation_date).toLocaleDateString() %></h6>
-                    <h6><strong>Idioma:</strong> <%= course.language %></h6>
+                    <h4 id="currentSectionTitle">Sección: <%= sections.length > 0 ? sections[0].title : '' %></h4>
+                    
+                    <!-- Etiquetas debajo del título del curso -->
+                    <div class="course-meta my-3">
+                        <!-- Fecha de creación -->
+                        <span class="badge bg-primary me-2">
+                            <i class="fas fa-calendar"></i> <%= new Date(course.creation_date).toLocaleDateString() %>
+                        </span>
+                
+                        <!-- Idioma del curso -->
+                        <span class="badge bg-secondary me-2">
+                            <i class="fas fa-language"></i> <%= course.language %>
+                        </span>
+                
+                        <!-- Categoría del curso, si está disponible -->
+                        <% if (course.category) { %>
+                            <span class="badge badge-category">
+                                <i class="fas fa-tags"></i> <%= course.category %>
+                            </span>
+                        <% } %>
+                    </div>
+                
+                    <div class="course-description">
+                        <h5>Descripción:</h5>
+                        <p class="player-course-description"><%= course.description %></p>
+                    </div>
                 </div>
 
+                <!-- Ratings Section -->
+                <div class="mt-4 ratings-section">
+                    <h4 class="mb-3">Valoraciones del curso</h4>
+                    <div class="ratings-summary mb-4">
+                        <% if (totalRatings > 0) { %>
+                            <!-- Mostrar promedio y estrellas si hay valoraciones -->
+                            <div class="d-flex align-items-center">
+                                <div class="h2 mb-0 me-3">
+                                    <%= (typeof averageRating === 'number' ? averageRating.toFixed(1) : '0.0') %>
+                                </div>
+                                
+                                <div>
+                                    <div class="stars">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <i class="<%= i <= Math.floor(averageRating) ? 'fas' : 'far' %> fa-star text-warning"></i>
+                                        <% } %>
+                                    </div>
+                                    <small class="text-muted">Basado en <%= totalRatings %> reseñas</small>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <p class="text-muted">Este curso aún no ha sido calificado</p>
+                        <% } %>
+                    </div>
 
+                    <!-- Si el usuario está autenticado, mostramos el formulario o botón -->
+                    <% if (userId) { %>
+                        <div class="reviews-list">
+                            <h5>Reseñas de estudiantes</h5>
+                            <% if (ratings.length > 0) { %>
+                                <!-- Mostrar lista de reseñas -->
+                                <div class="list-group">
+                                    <% ratings.forEach(rating => { %>
+                                        <div class="list-group-item bg-dark text-white border-secondary">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="mb-1"><%= rating.first_name %> <%= rating.last_name %></h6>
+                                                    <div class="mb-2">
+                                                        <% for (let i = 1; i <= 5; i++) { %>
+                                                            <i class="<%= i <= rating.rating ? 'fas' : 'far' %> fa-star text-warning"></i>
+                                                        <% } %>
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted"><%= new Date(rating.created_at).toLocaleDateString() %></small>
+                                            </div>
+                                            <p class="mb-1"><%= rating.comment %></p>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            <% } else { %>
+                                <p>No hay reseñas todavía. ¡Sé el primero en compartir tu experiencia!</p>
+
+                                <!-- Botón para dejar reseña -->
+                                <div class="mt-3 text-center">
+                                    <button class="btn btn-sm btn-primary" id="leaveReviewBtn">Deja tu reseña</button>
+                                </div>
+
+                                <!-- Formulario de calificación oculto -->
+                                <div id="reviewForm" class="mt-3 d-none">
+                                    <h5>Deja tu opinión</h5>
+                                    <form action="/rate_course" method="POST">
+                                        <input type="hidden" name="course_id" value="<%= course.course_id %>">
+                                        <input type="hidden" name="user_id" value="<%= userId %>">
+                                        <div class="mb-3">
+                                            <label for="rating" class="form-label">Calificación:</label>
+                                            <div class="rating-input">
+                                                <% for (let i = 5; i >= 1; i--) { %>
+                                                    <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>" required>
+                                                    <label for="star<%= i %>" title="<%= i %> estrellas">
+                                                        <i class="fas fa-star"></i>
+                                                    </label>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="comment" class="form-label">Comentario:</label>
+                                            <textarea id="comment" name="comment" class="form-control" rows="4" placeholder="Comparte tu experiencia con el curso"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-sm">Enviar reseña</button>
+                                    </form>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } else { %>
+                        <p class="mt-4">Inicia sesión para dejar una calificación.</p>
+                    <% } %>
+                </div>
             </div>
 
             <!-- Course Content Sidebar -->
-            <div class="player-sidebar">
-                <div class="player-sidebar-header">
-                    <h5>Contenido del curso</h5>
-                    <button type="button" class="player-close-btn">&times;</button>
+            <div id="courseSidebar" class="col-md-3 player-sidebar">
+                <div class="player-sidebar-header d-flex justify-content-between align-items-center p-3">
+                    <h5 class="mb-0">Contenido del curso</h5>
+                    <button id="closeSidebar" class="btn btn-sm btn-light d-md-none">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
 
                 <div class="player-accordion" id="courseAccordion">
                     <% sections.forEach((section, index) => { %>
                         <div class="player-accordion-item mb-2" data-section-id="<%= section.section_id %>">
-                            <div class="player-section-header d-flex justify-content-between align-items-center p-3">
+                            <div class="player-section-header p-3 <%= index === 0 ? 'active-section' : '' %>">
                                 <button 
-                                    class="btn btn-link text-white text-decoration-none video-selector w-100 text-start"
+                                    class="btn btn-link text-white text-decoration-none video-selector w-100 text-start d-flex align-items-center"
                                     data-video-url="<%= section.video_url %>"
                                     data-section-title="<%= section.title %>"
                                     onclick="changeVideo(this)">
-                                    <%= section.title %>
+                                    <i class="fas fa-play-circle me-2"></i>
+                                    <span><%= section.title %></span>
                                 </button>
                             </div>
                         </div>
@@ -74,44 +191,74 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        function changeVideo(button) {
-            // Actualizar el video
-            const videoUrl = button.getAttribute('data-video-url');
-            const sectionTitle = button.getAttribute('data-section-title');
-            const videoPlayer = document.getElementById('videoPlayer');
-            const titleElement = document.getElementById('currentSectionTitle');
-
-            if (videoUrl) {
-                videoPlayer.src = videoUrl;
-                titleElement.textContent = sectionTitle;
-
-                // Remover clase activa de todos los botones
-                document.querySelectorAll('.video-selector').forEach(btn => {
-                    btn.parentElement.classList.remove('active-section');
-                });
-
-                // Agregar clase activa al botón seleccionado
-                button.parentElement.classList.add('active-section');
-            }
-        }
-         // Función para ocultar la barra lateral y expandir el video
-         document.getElementById('closeSidebar').addEventListener('click', function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoSection = document.getElementById('videoSection');
             const sidebar = document.getElementById('courseSidebar');
-            const videoSection = document.querySelector('.player-video-section');
-            
-            sidebar.classList.add('hidden-sidebar');
-            videoSection.classList.add('full-screen-video');
-        });
-    
+            const closeSidebarBtn = document.getElementById('closeSidebar');
+            const showSidebarBtn = document.getElementById('showSidebar');
+            const leaveReviewBtn = document.getElementById('leaveReviewBtn');
+            const reviewForm = document.getElementById('reviewForm');
 
+            // Función para cambiar el video
+            window.changeVideo = function(button) {
+                const videoUrl = button.getAttribute('data-video-url');
+                const sectionTitle = button.getAttribute('data-section-title');
+                const videoPlayer = document.getElementById('videoPlayer');
+                const titleElement = document.getElementById('currentSectionTitle');
+
+                if (videoUrl) {
+                    videoPlayer.src = videoUrl;
+                    titleElement.textContent = `Sección: ${sectionTitle}`;
+
+                    // Actualizar clases activas
+                    document.querySelectorAll('.player-section-header').forEach(header => {
+                        header.classList.remove('active-section');
+                    });
+                    button.closest('.player-section-header').classList.add('active-section');
+
+                    // En móviles, cerrar el sidebar después de seleccionar un video
+                    if (window.innerWidth < 768) {
+                        toggleSidebar(false);
+                    }
+                }
+            };
+
+            // Función para toggle del sidebar
+            function toggleSidebar(show) {
+                sidebar.style.display = show ? 'block' : 'none';
+                if (window.innerWidth < 768) {
+                    videoSection.style.display = show ? 'none' : 'block';
+                }
+            }
+
+            // Event listeners para los botones del sidebar
+            closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+            showSidebarBtn.addEventListener('click', () => toggleSidebar(true));
+
+            // Mostrar el formulario de reseña cuando se haga clic en el botón
+            leaveReviewBtn.addEventListener('click', () => {
+                reviewForm.classList.toggle('d-none');
+            });
+
+            // Responsive behavior
+            function handleResize() {
+                if (window.innerWidth >= 768) {
+                    sidebar.style.display = 'block';
+                    videoSection.style.display = 'block';
+                    videoSection.classList.remove('col-md-12');
+                    videoSection.classList.add('col-md-9');
+                }
+            }
+
+            window.addEventListener('resize', handleResize);
+            handleResize(); // Initial call
+        });
     </script>
 
-<%- include('partials/footer') %>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <%- include('partials/footer') %>
+
 </body>
-
-
 </html>
