@@ -3,10 +3,9 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import session from 'express-session';
 import flash from 'connect-flash';
+import multer from 'multer';
 import indexRoutes from './routes/routes.js';
-import db from './db/database.js';
-
-
+import path from 'path';
 const app = express();
 
 // Configuración de express-session
@@ -21,6 +20,36 @@ app.use(session({
   }
 }));
 
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'src/public/uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${req.session.userId}-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
+
+  if (mimetype && extname) {
+    cb(null, true);
+  } else {
+    cb(new Error('Solo se permiten imágenes'), false);
+  }
+};
+
+const upload = multer({ 
+  storage, 
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  }
+}).single('profilePhoto');
+
 // Inicializar mensajes flash
 app.use(flash());
 app.use(express.json());
@@ -33,10 +62,8 @@ app.set('view engine', 'ejs');
 
 // Middleware para hacer userId y userRole disponibles en todas las vistas
 app.use((req, res, next) => {
-  res.locals.userId = req.session.userId || null; // Pasa el userId a las vistas
-  res.locals.userRole = req.session.userRole || null; // Pasa el userRole a las vistas
-  console.log('Session ID:', req.sessionID); // Muestra el ID de la sesión para depuración
-  console.log('Session data:', req.session); // Muestra todos los datos de la sesión
+  res.locals.userId = req.session.userId || null;
+  res.locals.userRole = req.session.userRole || null;
   next();
 });
 
@@ -47,27 +74,30 @@ app.use((req, res, next) => {
   next();
 });
 
+// Servir archivos estáticos
+app.use(express.static(join(__dirname, 'public')));
+
 // Usar las rutas
 app.use(indexRoutes);
 
+// Middleware para configurar el tipo de contenido para CSS
 app.use((req, res, next) => {
   if (req.path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
+    res.setHeader('Content-Type', 'text/css');
   }
   next();
 });
 
-// Servir archivos estáticos
-app.use(express.static(join(__dirname, 'public')));
-
 // Manejo de errores
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).send('Algo salió mal');
 });
 
 // Iniciar el servidor
-const PORT = process.env.PORT || 4000; // Permite usar un puerto definido en el entorno
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+

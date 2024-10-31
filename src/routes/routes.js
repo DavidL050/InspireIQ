@@ -1,8 +1,24 @@
 import { Router } from "express";
 import { loginUser, logoutUser, registerUser, getUserById, getUserCourseProgress, getUserLinks } from "../db/auth.js";
 import db from "../db/database.js";
+import multer from "multer";
+import path from 'path';
+
 
 const router = Router();
+
+// Configuración de multer para manejar la carga de archivos
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'src/public/uploads/'); // Directorio donde se almacenarán las imágenes de perfil
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `${file.fieldname}-${uniqueSuffix}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ storage });
 
 // Middleware para pasar userId y userRole a todas las vistas
 router.use((req, res, next) => {
@@ -12,27 +28,28 @@ router.use((req, res, next) => {
 });
 
 // Middleware de autenticación
-
 function isAuthenticated(req, res, next) {
-  if (req.session && req.session.userId) { // Verifica si el usuario tiene una sesión activa
+  if (req.session && req.session.userId) {
       return next();
   }
   
-  res.redirect('/?login=true');
+  if (req.path !== '/') {
+    return res.redirect('/?login=true');
+  }
+  
+  res.redirect('/');
 }
-
 
 // ---- RUTAS DE AUTENTICACIÓN ----
 
 // Página principal
 router.get("/", async (req, res) => {
   try {
-      // Obtener algunos cursos destacados para la página principal
       const query = `
           SELECT courses.*, users.first_name, users.last_name
           FROM courses
           JOIN users ON courses.creator_id = users.user_id
-          LIMIT 3  -- Aquí mostramos solo 3 cursos destacados
+          LIMIT 3;
       `;
       const [courses] = await db.query(query);
       res.render("index", { courses });
@@ -43,16 +60,14 @@ router.get("/", async (req, res) => {
   }
 });
 
-
 // Ruta para verificar si el usuario está autenticado
 router.get('/check-auth', (req, res) => {
-  if (req.session && req.session.userId) { // Usa req.session.userId para verificar la autenticación
+  if (req.session && req.session.userId) {
       res.status(200).json({ authenticated: true });
   } else {
       res.status(401).json({ authenticated: false });
   }
 });
-
 
 // Proceso de registro
 router.post("/signup", async (req, res) => {
@@ -73,19 +88,13 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-
-
 // Proceso de inicio de sesión
 router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Intenta iniciar sesión
     await loginUser(email, password, req);
-
-    // Respuesta en caso de éxito
     res.status(200).json({ message: 'Inicio de sesión exitoso', redirect: '/' });
   } catch (err) {
-    // Respuesta en caso de error
     res.status(401).json({ error: err.message });
   }
 });
@@ -114,6 +123,34 @@ router.get("/profile", isAuthenticated, async (req, res) => {
   }
 });
 
+// Ruta para actualizar la foto de perfil
+router.post('/profile/upload-photo', isAuthenticated, upload.single('profilePhoto'), async (req, res) => {
+  try {
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ message: 'Por favor, selecciona una imagen.' });
+    }
+
+    const userId = req.session.userId;
+    const profileImage = `/uploads/${req.file.filename}`;
+
+    // Update database with new profile image
+    const [result] = await db.query('UPDATE users SET profile_image = ? WHERE user_id = ?', [profileImage, userId]);
+
+    // Check if update was successful
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'No se pudo actualizar la foto de perfil.' });
+    }
+
+    res.status(200).json({ 
+      message: 'Foto de perfil actualizada exitosamente',
+      profileImage: profileImage
+    });
+  } catch (error) {
+    console.error('Error uploading profile photo:', error);
+    res.status(500).json({ message: 'Hubo un error al subir la foto de perfil.' });
+  }
+});
 // Guardar cambios de perfil y agregar enlaces
 router.post("/profile/save", isAuthenticated, async (req, res) => {
   const { firstName, lastName, email, biography, linkName, linkUrl, action, linkId } = req.body;
@@ -121,7 +158,6 @@ router.post("/profile/save", isAuthenticated, async (req, res) => {
 
   try {
     if (action === "saveProfile") {
-      // Guardar cambios en el perfil
       await db.query(
         'UPDATE users SET first_name = ?, last_name = ?, email = ?, biography = ? WHERE user_id = ?',
         [firstName, lastName, email, biography, userId]
@@ -130,7 +166,6 @@ router.post("/profile/save", isAuthenticated, async (req, res) => {
     } 
 
     if (action === "addLink" && linkName && linkUrl) {
-      // Agregar nuevo enlace social
       const [existingLink] = await db.query(
         'SELECT * FROM user_links WHERE user_id = ? AND link_name = ? AND link_url = ?',
         [userId, linkName, linkUrl]
@@ -148,7 +183,6 @@ router.post("/profile/save", isAuthenticated, async (req, res) => {
     } 
 
     if (action === "editLink" && linkId && linkName && linkUrl) {
-      // Editar enlace existente
       await db.query(
         'UPDATE user_links SET link_name = ?, link_url = ? WHERE link_id = ? AND user_id = ?',
         [linkName, linkUrl, linkId, userId]
@@ -179,7 +213,6 @@ router.post("/profile/delete-link", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar el enlace.' });
   }
 });
-
 // ---- RUTAS DE CURSOS ----
 // Página de todos los cursos (requiere autenticación)
 router.get("/course", isAuthenticated, async (req, res) => {
