@@ -12,13 +12,15 @@ router.use((req, res, next) => {
 });
 
 // Middleware de autenticación
+
 function isAuthenticated(req, res, next) {
-  if (req.session?.userId) {
-    return next();
-  } else {
-    return res.redirect('/signin');
+  if (req.session && req.session.userId) { // Verifica si el usuario tiene una sesión activa
+      return next();
   }
+  
+  res.redirect('/?login=true');
 }
+
 
 // ---- RUTAS DE AUTENTICACIÓN ----
 
@@ -42,14 +44,15 @@ router.get("/", async (req, res) => {
 });
 
 
-// Página de registro
-router.get("/signup", (req, res) => {
-  if (req.session?.userId) {
-    return res.redirect('/');
+// Ruta para verificar si el usuario está autenticado
+router.get('/check-auth', (req, res) => {
+  if (req.session && req.session.userId) { // Usa req.session.userId para verificar la autenticación
+      res.status(200).json({ authenticated: true });
+  } else {
+      res.status(401).json({ authenticated: false });
   }
-  const errorMessage = req.query.error || null;
-  res.render("signup.ejs", { errorMessage });
 });
+
 
 // Proceso de registro
 router.post("/signup", async (req, res) => {
@@ -63,31 +66,27 @@ router.post("/signup", async (req, res) => {
         console.error("Error al guardar la sesión después del registro:", err);
         return res.status(500).json({ error: 'Error en el servidor al guardar la sesión' });
       }
-      res.redirect('/?success=true');
+      res.status(200).json({ message: 'Registro exitoso', redirect: '/' });
     });
   } catch (err) {
-    res.redirect(`/signup?error=${encodeURIComponent(err.message)}`);
+    res.status(400).json({ error: err.message });
   }
 });
 
-// Página de inicio de sesión
-router.get("/signin", (req, res) => {
-  if (req.session?.userId) {
-    return res.redirect('/');
-  }
-  const successMessage = req.query.success ? "Te has registrado exitosamente" : null;
-  const errorMessage = req.query.error || null;
-  res.render("signin.ejs", { successMessage, errorMessage });
-});
+
 
 // Proceso de inicio de sesión
 router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
   try {
+    // Intenta iniciar sesión
     await loginUser(email, password, req);
-    res.redirect('/');
+
+    // Respuesta en caso de éxito
+    res.status(200).json({ message: 'Inicio de sesión exitoso', redirect: '/' });
   } catch (err) {
-    res.redirect(`/signin?error=${encodeURIComponent(err.message)}`);
+    // Respuesta en caso de error
+    res.status(401).json({ error: err.message });
   }
 });
 
@@ -115,60 +114,69 @@ router.get("/profile", isAuthenticated, async (req, res) => {
   }
 });
 
-// Guardar cambios de perfil
+// Guardar cambios de perfil y agregar enlaces
 router.post("/profile/save", isAuthenticated, async (req, res) => {
-  const { firstName, lastName, email, biography, linkName, linkUrl, action } = req.body;
+  const { firstName, lastName, email, biography, linkName, linkUrl, action, linkId } = req.body;
   const userId = req.session.userId;
 
   try {
     if (action === "saveProfile") {
+      // Guardar cambios en el perfil
       await db.query(
         'UPDATE users SET first_name = ?, last_name = ?, email = ?, biography = ? WHERE user_id = ?',
         [firstName, lastName, email, biography, userId]
       );
-      req.flash('successMessage', 'Cambios de perfil guardados correctamente.');
-    }
+      return res.status(200).json({ message: 'Cambios de perfil guardados correctamente.' });
+    } 
 
     if (action === "addLink" && linkName && linkUrl) {
+      // Agregar nuevo enlace social
       const [existingLink] = await db.query(
         'SELECT * FROM user_links WHERE user_id = ? AND link_name = ? AND link_url = ?',
         [userId, linkName, linkUrl]
       );
 
       if (existingLink.length > 0) {
-        req.flash('errorMessage', 'Este enlace ya ha sido agregado.');
+        return res.status(400).json({ message: 'Este enlace ya ha sido agregado.' });
       } else {
         await db.query(
           'INSERT INTO user_links (user_id, link_name, link_url) VALUES (?, ?, ?)',
           [userId, linkName, linkUrl]
         );
-        req.flash('successMessage', 'Enlace agregado correctamente.');
+        return res.status(200).json({ message: 'Enlace agregado correctamente.' });
       }
+    } 
+
+    if (action === "editLink" && linkId && linkName && linkUrl) {
+      // Editar enlace existente
+      await db.query(
+        'UPDATE user_links SET link_name = ?, link_url = ? WHERE link_id = ? AND user_id = ?',
+        [linkName, linkUrl, linkId, userId]
+      );
+      return res.status(200).json({ message: 'Enlace actualizado correctamente.' });
     }
 
-    res.redirect("/profile");
+    res.status(400).json({ message: 'Acción no válida.' });
   } catch (err) {
-    req.flash('errorMessage', 'Hubo un error al procesar tu solicitud.');
-    res.redirect("/profile");
+    console.error("Error al procesar el enlace:", err);
+    res.status(500).json({ message: 'Hubo un error al procesar tu solicitud.' });
   }
 });
 
 // Eliminar enlaces de perfil
-router.post("/profile/delete-link", async (req, res) => {
+router.post("/profile/delete-link", isAuthenticated, async (req, res) => {
   const { deleteLinkId } = req.body;
   const userId = req.session.userId;
 
   try {
     const result = await db.query('DELETE FROM user_links WHERE link_id = ? AND user_id = ?', [deleteLinkId, userId]);
     if (result.affectedRows === 0) {
-      req.flash('errorMessage', 'Enlace no encontrado o no tienes permiso para eliminarlo.');
-    } else {
-      req.flash('successMessage', 'Enlace eliminado correctamente.');
+      return res.status(404).json({ message: 'Enlace no encontrado o no tienes permiso para eliminarlo.' });
     }
-    res.redirect('/profile');
+    return res.status(200).json({ message: 'Enlace eliminado correctamente.' });
   } catch (err) {
-    req.flash('errorMessage', 'Error al eliminar el enlace.');
-    res.redirect('/profile');
+    console.error("Error al eliminar el enlace:", err);
+    res.status(500).json({ message: 'Error al eliminar el enlace.' });
   }
 });
 

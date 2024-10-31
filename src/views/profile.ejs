@@ -136,21 +136,10 @@
     </header>
     
     <div class="container py-5">
-        <% if (successMessage && successMessage.length > 0) { %>
-            <div class="alert alert-success mb-4" role="alert">
-                <i class="material-icons">check_circle</i>
-                <%= successMessage %>
-            </div>
-        <% } %>
-
-        <% if (errorMessage && errorMessage.length > 0) { %>
-            <div class="alert alert-danger mb-4" role="alert">
-                <i class="material-icons">error</i>
-                <%= errorMessage %>
-            </div>
-        <% } %>
+        <div id="alert-container"></div> <!-- Contenedor de alertas para AJAX -->
 
         <div class="row g-4">
+            <!-- Información del perfil del usuario -->
             <div class="col-md-4">
                 <div class="profile-card card h-100">
                     <div class="card-body text-center">
@@ -159,23 +148,15 @@
                         <p class="text-muted mb-4"><%= user.role %></p>
                         <hr class="my-4">
                         <div class="text-start">
-                            <h6 class="mb-3">
-                                <i class="material-icons">person</i>
-                                Biografía
-                            </h6>
+                            <h6 class="mb-3"><i class="material-icons">person</i> Biografía</h6>
                             <p class="text-muted mb-4"><%= user.biography || "Sin biografía" %></p>
 
-                            <h6 class="mb-3">
-                                <i class="material-icons">link</i>
-                                Enlaces Sociales
-                            </h6>
-                            <% if (userLinks.length > 0) { %>
-                                <ul class="social-links">
+                            <h6 class="mb-3"><i class="material-icons">link</i> Enlaces Sociales</h6>
+                            <ul class="social-links" id="social-links-list">
+                                <% if (userLinks.length > 0) { %>
                                     <% userLinks.forEach(link => { %>
-                                        <li class="d-flex align-items-center justify-content-between">
-                                            <a href="<%= link.link_url %>" target="_blank">
-                                                <%= link.link_name %>
-                                            </a>
+                                        <li id="link-<%= link.link_id %>" class="d-flex align-items-center justify-content-between">
+                                            <a href="<%= link.link_url %>" target="_blank"><%= link.link_name %></a>
                                             <div>
                                                 <button class="btn btn-link p-1" type="button" onclick="editLink('<%= link.link_id %>', '<%= link.link_name %>', '<%= link.link_url %>')">
                                                     <i class="material-icons" style="color: #6b7280;">edit</i>
@@ -186,20 +167,21 @@
                                             </div>
                                         </li>
                                     <% }) %>
-                                </ul>
-                            <% } else { %>
-                                <p class="text-muted">No se ha agregado ningún enlace social.</p>
-                            <% } %>
+                                <% } else { %>
+                                    <p class="text-muted">No se ha agregado ningún enlace social.</p>
+                                <% } %>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Formulario de perfil y enlaces sociales -->
             <div class="col-md-8">
                 <div class="profile-card card mb-4">
                     <div class="card-body">
                         <h5 class="card-title mb-4 fw-bold">Información de perfil</h5>
-                        <form action="/profile/save" method="POST">
+                        <form id="profile-form">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="firstName" class="form-label">Nombres</label>
@@ -236,78 +218,94 @@
                             </div>
 
                             <div class="d-flex gap-3 mt-4">
-                                <button type="submit" class="btn btn-secondary btn-action" id="addLinkButton" name="action" value="addLink">
+                                <button type="button" class="btn btn-secondary btn-action" id="addLinkButton" onclick="addOrUpdateLink()">
                                     <i class="material-icons">add_link</i>
                                     Agregar nuevo enlace
                                 </button>
-                                <button type="submit" class="btn btn-primary btn-action" name="action" value="saveProfile">
+                                <button type="button" class="btn btn-primary btn-action" onclick="saveProfile()">
                                     <i class="material-icons">save</i>
                                     Guardar cambios
                                 </button>
                             </div>
                         </form>
-                        <button class="btn btn-secondary btn-action mt-3" onclick="resetForm()">
-                            <i class="material-icons">cancel</i>
-                            Cancelar edición
-                        </button>
-                    </div>
-                </div>
-
-                <div class="profile-card card">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4 fw-bold">Progreso de Cursos</h5>
-                        <% if (coursesProgress.length > 0) { %>
-                            <% coursesProgress.forEach(course => { %>
-                                <div class="course-progress">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label mb-0 fw-medium"><%= course.name %></label>
-                                        <span class="text-muted"><%= course.progress %>%</span>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar" role="progressbar" 
-                                             style="width: <%= course.progress %>%" 
-                                             aria-valuenow="<%= course.progress %>" 
-                                             aria-valuemin="0" 
-                                             aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                            <% }) %>
-                        <% } else { %>
-                            <p class="text-muted">No se ha registrado progreso en ningún curso.</p>
-                        <% } %>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <form id="deleteLinkForm" action="/profile/delete-link" method="POST" style="display: none;">
-        <input type="hidden" id="deleteLinkId" name="deleteLinkId">
-    </form>
-
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        function showAlert(message, type = 'success') {
+            $('#alert-container').html(`<div class="alert alert-${type}">${message}</div>`);
+            setTimeout(() => $('#alert-container').html(''), 3000);
+        }
+
+        function addOrUpdateLink() {
+            const linkId = $('#linkId').val();
+            const linkName = $('#linkName').val();
+            const linkUrl = $('#linkUrl').val();
+            const action = linkId ? "editLink" : "addLink";
+
+            $.ajax({
+                url: '/profile/save',
+                method: 'POST',
+                data: { linkId, linkName, linkUrl, action },
+                success: function(response) {
+                    showAlert('¡Enlace actualizado exitosamente!');
+                    location.reload();
+                },
+                error: function(xhr) {
+                    showAlert('Error al procesar el enlace social.', 'danger');
+                }
+            });
+        }
+
         function deleteLink(linkId) {
-            console.log("Intentando eliminar el enlace con ID:", linkId);
-            
             if (confirm('¿Estás seguro de que deseas eliminar este enlace?')) {
-                document.getElementById('deleteLinkId').value = linkId;
-                document.getElementById('deleteLinkForm').submit();
+                $.ajax({
+                    url: '/profile/delete-link',
+                    method: 'POST',
+                    data: { deleteLinkId: linkId },
+                    success: function(response) {
+                        showAlert('¡Enlace eliminado correctamente!');
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        showAlert('Error al eliminar el enlace social.', 'danger');
+                    }
+                });
             }
         }
 
         function editLink(linkId, name, url) {
-            document.getElementById('linkId').value = linkId;
-            document.getElementById('linkName').value = name;
-            document.getElementById('linkUrl').value = url;
-            document.getElementById('addLinkButton').innerHTML = '<i class="material-icons">edit</i> Actualizar enlace';
+            $('#linkId').val(linkId);
+            $('#linkName').val(name);
+            $('#linkUrl').val(url);
+            $('#addLinkButton').html('<i class="material-icons">edit</i> Actualizar enlace');
         }
 
-        function resetForm() {
-            document.getElementById('linkId').value = '';
-            document.getElementById('linkName').value = '';
-            document.getElementById('linkUrl').value = '';
-            document.getElementById('addLinkButton').innerHTML = '<i class="material-icons">add_link</i> Agregar nuevo enlace';
+        function saveProfile() {
+            const data = {
+                firstName: $('#firstName').val(),
+                lastName: $('#lastName').val(),
+                email: $('#email').val(),
+                biography: $('#biography').val(),
+                action: 'saveProfile'
+            };
+
+            $.ajax({
+                url: '/profile/save',
+                method: 'POST',
+                data: data,
+                success: function(response) {
+                    showAlert('¡Perfil actualizado exitosamente!');
+                },
+                error: function(xhr) {
+                    showAlert('Error al actualizar el perfil.', 'danger');
+                }
+            });
         }
     </script>
 </body>

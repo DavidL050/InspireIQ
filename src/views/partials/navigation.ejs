@@ -15,7 +15,7 @@
             <!-- Contenedor 2: Barra de búsqueda -->
             <div class="search-container">
                 <input type="text" class="form-control search-bar" placeholder="Buscar cursos gratuitos" />
-                <a href="/course" class="search-icon-link">
+                <a href="/course" class="search-icon-link" data-requires-auth="true">
                     <span class="material-icons search-icon">search</span>
                 </a>
             </div>
@@ -36,17 +36,17 @@
                         </li>
                     <% } else { %>
                         <li class="nav-item">
-                            <a class="nav-link" href="/course">Cursos</a>
+                            <a class="nav-link" href="/course" data-requires-auth="true">Cursos</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/profile">Perfil</a>
+                            <a class="nav-link" href="/profile" data-requires-auth="true">Perfil</a>
                         </li>
                         <% if (userRole === 'teacher') { %>
                             <li class="nav-item">
-                                <a class="nav-link" href="/create_course">Crear Curso</a>
+                                <a class="nav-link" href="/create_course" data-requires-auth="true">Crear Curso</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="/my_courses">Mis Cursos</a>
+                                <a class="nav-link" href="/my_courses" data-requires-auth="true">Mis Cursos</a>
                             </li>
                         <% } %>
                         <li class="nav-item">
@@ -54,8 +54,7 @@
                                 <a class="nav-link-cerrar" href="/logout" style="display: flex; align-items: center;">
                                   <span class="material-icons">exit_to_app</span>
                                 </a>
-                              </button>
-                              
+                            </button>
                         </li>
                     <% } %>
                 </ul>

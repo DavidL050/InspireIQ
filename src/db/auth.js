@@ -45,6 +45,8 @@ async function loginUser(email, password, req) {
     // Guardar el userId y userRole en la sesión
     req.session.userId = user.user_id;
     req.session.userRole = user.role;
+    console.log("Sesión iniciada: userId =", req.session.userId, ", userRole =", req.session.userRole);
+    
 
     await new Promise((resolve, reject) => {
       req.session.save(err => {

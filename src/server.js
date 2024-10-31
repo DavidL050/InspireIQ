@@ -2,9 +2,10 @@ import express from 'express';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import session from 'express-session';
+import flash from 'connect-flash';
 import indexRoutes from './routes/routes.js';
 import db from './db/database.js';
-import flash from 'connect-flash';
+
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(flash());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Configuración de vistas
 const __dirname = dirname(fileURLToPath(import.meta.url));
 app.set('views', join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -47,6 +49,13 @@ app.use((req, res, next) => {
 
 // Usar las rutas
 app.use(indexRoutes);
+
+app.use((req, res, next) => {
+  if (req.path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+  }
+  next();
+});
 
 // Servir archivos estáticos
 app.use(express.static(join(__dirname, 'public')));
