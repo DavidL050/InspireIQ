@@ -7,7 +7,7 @@ async function registerUser(name, lastname, email, password, role) {
   try {
 
       // Verificar si el email ya existe
-      const [existingUser] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+      const [existingUser] = await db.query('SELECT user_id FROM users WHERE email = ?', [email]);
       if (existingUser.length > 0) {
           throw new Error('El correo electrónico ya está registrado');
       }

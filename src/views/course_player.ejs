@@ -15,6 +15,20 @@
         <%- include('partials/navigation') %>
     </header>
 
+    <div class="container mt-4">
+        <!-- Mostrar mensajes flash -->
+        <% if (successMessage && successMessage.length > 0) { %>
+            <div class="alert alert-success">
+                <%= successMessage[0] %>
+            </div>
+        <% } %>
+        <% if (errorMessage && errorMessage.length > 0) { %>
+            <div class="alert alert-danger">
+                <%= errorMessage[0] %>
+            </div>
+        <% } %>
+    </div>
+
     <div class="container-fluid player-container">
         <div class="row player-content">
             <!-- Video Section -->
@@ -49,17 +63,12 @@
                     
                     <!-- Etiquetas debajo del título del curso -->
                     <div class="course-meta my-3">
-                        <!-- Fecha de creación -->
                         <span class="badge bg-primary me-2">
                             <i class="fas fa-calendar"></i> <%= new Date(course.creation_date).toLocaleDateString() %>
                         </span>
-                
-                        <!-- Idioma del curso -->
                         <span class="badge bg-secondary me-2">
                             <i class="fas fa-language"></i> <%= course.language %>
                         </span>
-                
-                        <!-- Categoría del curso, si está disponible -->
                         <% if (course.category) { %>
                             <span class="badge badge-category">
                                 <i class="fas fa-tags"></i> <%= course.category %>
@@ -74,20 +83,18 @@
                 </div>
 
                 <!-- Ratings Section -->
-                <div class="mt-4 ratings-section">
+                <div class="ratings-section mt-4">
                     <h4 class="mb-3">Valoraciones del curso</h4>
                     <div class="ratings-summary mb-4">
                         <% if (totalRatings > 0) { %>
-                            <!-- Mostrar promedio y estrellas si hay valoraciones -->
                             <div class="d-flex align-items-center">
                                 <div class="h2 mb-0 me-3">
-                                    <%= (typeof averageRating === 'number' ? averageRating.toFixed(1) : '0.0') %>
+                                    <%= averageRating %>
                                 </div>
-                                
                                 <div>
                                     <div class="stars">
                                         <% for (let i = 1; i <= 5; i++) { %>
-                                            <i class="<%= i <= Math.floor(averageRating) ? 'fas' : 'far' %> fa-star text-warning"></i>
+                                            <i class="<%= i <= Math.round(averageRating) ? 'fas fa-star text-warning' : 'far fa-star text-muted' %>"></i>
                                         <% } %>
                                     </div>
                                     <small class="text-muted">Basado en <%= totalRatings %> reseñas</small>
@@ -98,12 +105,10 @@
                         <% } %>
                     </div>
 
-                    <!-- Si el usuario está autenticado, mostramos el formulario o botón -->
                     <% if (userId) { %>
                         <div class="reviews-list">
                             <h5>Reseñas de estudiantes</h5>
                             <% if (ratings.length > 0) { %>
-                                <!-- Mostrar lista de reseñas -->
                                 <div class="list-group">
                                     <% ratings.forEach(rating => { %>
                                         <div class="list-group-item bg-dark text-white border-secondary">
@@ -124,40 +129,40 @@
                                 </div>
                             <% } else { %>
                                 <p>No hay reseñas todavía. ¡Sé el primero en compartir tu experiencia!</p>
+                            <% } %>
 
-                                <!-- Botón para dejar reseña -->
-                                <div class="mt-3 text-center">
-                                    <button class="btn btn-sm btn-primary" id="leaveReviewBtn">Deja tu reseña</button>
-                                </div>
+                            <!-- Botón para dejar reseña -->
+                            <div class="mt-3 text-center">
+                                <button class="btn btn-sm btn-primary" id="leaveReviewBtn">Deja tu reseña</button>
+                            </div>
 
-                                <!-- Formulario de calificación oculto -->
-                                <div id="reviewForm" class="mt-3 d-none">
-                                    <h5>Deja tu opinión</h5>
-                                    <form action="/rate_course" method="POST">
-                                        <input type="hidden" name="course_id" value="<%= course.course_id %>">
-                                        <input type="hidden" name="user_id" value="<%= userId %>">
-                                        <div class="mb-3">
-                                            <label for="rating" class="form-label">Calificación:</label>
-                                            <div class="rating-input">
-                                                <% for (let i = 5; i >= 1; i--) { %>
-                                                    <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>" required>
-                                                    <label for="star<%= i %>" title="<%= i %> estrellas">
-                                                        <i class="fas fa-star"></i>
-                                                    </label>
-                                                <% } %>
-                                            </div>
+                            <!-- Formulario de calificación -->
+                            <% if (userId && !hasRated) { %>
+                                <h5>Deja tu valoración</h5>
+                                <form action="/rate_course" method="POST" id="reviewForm" style="display:none;">
+                                    <input type="hidden" name="course_id" value="<%= course.course_id %>">
+                                    <input type="hidden" name="user_id" value="<%= userId %>">
+                                    <div class="mb-3">
+                                        <label for="rating" class="form-label">Calificación:</label>
+                                        <div class="rating-input">
+                                            <% for (let i = 5; i >= 1; i--) { %>
+                                                <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>" required>
+                                                <label for="star<%= i %>" title="<%= i %> estrellas">
+                                                    <i class="fas fa-star"></i>
+                                                </label>
+                                            <% } %>
                                         </div>
-                                        <div class="mb-3">
-                                            <label for="comment" class="form-label">Comentario:</label>
-                                            <textarea id="comment" name="comment" class="form-control" rows="4" placeholder="Comparte tu experiencia con el curso"></textarea>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary btn-sm">Enviar reseña</button>
-                                    </form>
-                                </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="comment" class="form-label">Comentario:</label>
+                                        <textarea id="comment" name="comment" class="form-control" rows="4" placeholder="Comparte tu experiencia con el curso"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm">Enviar reseña</button>
+                                </form>
+                            <% } else if (hasRated) { %>
+                                <p class="text-muted">Ya has valorado este curso.</p>
                             <% } %>
                         </div>
-                    <% } else { %>
-                        <p class="mt-4">Inicia sesión para dejar una calificación.</p>
                     <% } %>
                 </div>
             </div>
@@ -195,70 +200,24 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const videoSection = document.getElementById('videoSection');
-            const sidebar = document.getElementById('courseSidebar');
-            const closeSidebarBtn = document.getElementById('closeSidebar');
-            const showSidebarBtn = document.getElementById('showSidebar');
             const leaveReviewBtn = document.getElementById('leaveReviewBtn');
             const reviewForm = document.getElementById('reviewForm');
 
-            // Función para cambiar el video
-            window.changeVideo = function(button) {
-                const videoUrl = button.getAttribute('data-video-url');
-                const sectionTitle = button.getAttribute('data-section-title');
-                const videoPlayer = document.getElementById('videoPlayer');
-                const titleElement = document.getElementById('currentSectionTitle');
-
-                if (videoUrl) {
-                    videoPlayer.src = videoUrl;
-                    titleElement.textContent = `Sección: ${sectionTitle}`;
-
-                    // Actualizar clases activas
-                    document.querySelectorAll('.player-section-header').forEach(header => {
-                        header.classList.remove('active-section');
-                    });
-                    button.closest('.player-section-header').classList.add('active-section');
-
-                    // En móviles, cerrar el sidebar después de seleccionar un video
-                    if (window.innerWidth < 768) {
-                        toggleSidebar(false);
-                    }
-                }
-            };
-
-            // Función para toggle del sidebar
-            function toggleSidebar(show) {
-                sidebar.style.display = show ? 'block' : 'none';
-                if (window.innerWidth < 768) {
-                    videoSection.style.display = show ? 'none' : 'block';
-                }
-            }
-
-            // Event listeners para los botones del sidebar
-            closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
-            showSidebarBtn.addEventListener('click', () => toggleSidebar(true));
-
             // Mostrar el formulario de reseña cuando se haga clic en el botón
             leaveReviewBtn.addEventListener('click', () => {
-                reviewForm.classList.toggle('d-none');
+                reviewForm.style.display = reviewForm.style.display === 'none' ? 'block' : 'none';
             });
-
-            // Responsive behavior
-            function handleResize() {
-                if (window.innerWidth >= 768) {
-                    sidebar.style.display = 'block';
-                    videoSection.style.display = 'block';
-                    videoSection.classList.remove('col-md-12');
-                    videoSection.classList.add('col-md-9');
-                }
-            }
-
-            window.addEventListener('resize', handleResize);
-            handleResize(); // Initial call
         });
+        
+        // Esperar 5 segundos y luego ocultar los mensajes flash
+        setTimeout(() => {
+            const flashMessages = document.querySelectorAll('.alert');
+            flashMessages.forEach(message => {
+                message.style.display = 'none';
+            });
+        }, 5000);
     </script>
 
     <%- include('partials/footer') %>
-
 </body>
 </html>

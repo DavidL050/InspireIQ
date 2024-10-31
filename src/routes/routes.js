@@ -296,6 +296,7 @@ router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
 // ---- PAGINA DE COURSE PLAYER ----
 router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;
+  const userId = req.session.userId;
 
   try {
     // Consulta para obtener los detalles del curso
@@ -313,29 +314,50 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
     }
 
     // Consulta para obtener las secciones del curso
-    const [sections] = await db.query('SELECT section_id, course_id, title, video_url FROM sections WHERE course_id = ?', [courseId]);
+    const sectionsResult = await db.query(
+      'SELECT section_id, course_id, title, video_url FROM sections WHERE course_id = ?', 
+      [courseId]
+    );
+    const sections = sectionsResult[0];
 
     // Transformar las URLs de YouTube para que sean reproducibles en iframe
     const processedSections = sections.map(section => ({
       ...section,
-      video_url: transformYouTubeUrl(section.video_url) // Usamos la función transformYouTubeUrl aquí
+      video_url: transformYouTubeUrl(section.video_url)
     }));
 
     // Consulta para obtener las valoraciones del curso
-    const [ratings] = await db.query('SELECT r.rating, r.comment, r.created_at, u.first_name, u.last_name FROM ratings r JOIN users u ON r.user_id = u.user_id WHERE r.course_id = ?', [courseId]);
+    const ratingsResult = await db.query(
+      'SELECT r.rating, r.comment, r.created_at, u.first_name, u.last_name FROM ratings r JOIN users u ON r.user_id = u.user_id WHERE r.course_id = ?',
+      [courseId]
+    );
+    const ratings = ratingsResult[0];
 
     // Consulta para obtener el promedio de las calificaciones
-    const [averageRatingResult] = await db.query('SELECT AVG(rating) AS averageRating, COUNT(*) AS totalRatings FROM ratings WHERE course_id = ?', [courseId]);
+    const [averageRatingResult] = await db.query(
+      'SELECT AVG(rating) AS averageRating, COUNT(*) AS totalRatings FROM ratings WHERE course_id = ?', 
+      [courseId]
+    );
     const { averageRating = 0, totalRatings = 0 } = averageRatingResult[0] || {};
 
+    // Verificar si el usuario ya ha valorado el curso
+    const [userRating] = await db.query(
+      'SELECT * FROM ratings WHERE course_id = ? AND user_id = ?',
+      [courseId, userId]
+    );
+    const hasRated = userRating.length > 0;
+
     // Renderizar la página del reproductor de curso
-    res.render("course_player.ejs", {
-      course: courseDetails[0],          // Detalles del curso
-      sections: processedSections,        // Secciones procesadas
-      ratings,                            // Valoraciones
-      averageRating,                      // Promedio de valoraciones
-      totalRatings,                       // Total de valoraciones
-      user: req.session.user              // Información del usuario autenticado
+    res.render("course_player", {
+      course: courseDetails[0],             // Detalles del curso
+      sections: processedSections,          // Secciones procesadas
+      ratings,                              // Valoraciones
+      averageRating: parseFloat(averageRating).toFixed(1), // Promedio de valoraciones, formateado a un decimal
+      totalRatings,                         // Total de valoraciones
+      userId,                               // ID del usuario autenticado
+      hasRated,                             // Indica si el usuario ya ha valorado
+      successMessage: req.flash('successMessage'),
+      errorMessage: req.flash('errorMessage')
     });
   } catch (err) {
     console.error('Error al cargar la página del curso:', err);
@@ -366,8 +388,6 @@ function transformYouTubeUrl(url) {
     return '';
   }
 }
-
-
 
 
 // ---- RUTAS DE ENROLLMENTS ----
@@ -412,15 +432,58 @@ router.post('/rate_course', isAuthenticated, async (req, res) => {
       return res.redirect('back');
     }
 
-    // Insertar la calificación en la base de datos
+    // Comprobar si el usuario ya ha valorado este curso
+    const [existingRating] = await db.query(
+      'SELECT * FROM ratings WHERE course_id = ? AND user_id = ?',
+      [course_id, user_id]
+    );
+
+    const hasRated = existingRating.length > 0;
+
+    if (hasRated) {
+      // Si ya existe una valoración, mostrar un mensaje de error
+      req.flash('errorMessage', 'Ya has valorado este curso.');
+      return res.redirect(`/course_player/${course_id}`);
+    }
+
+    // Insertar la nueva valoración en la base de datos
     await db.query(
       'INSERT INTO ratings (course_id, user_id, rating, comment, created_at) VALUES (?, ?, ?, ?, NOW())',
       [course_id, user_id, rating, comment]
     );
 
     req.flash('successMessage', 'Valoración añadida correctamente.');
-    res.redirect(`/course_details/${course_id}`);
+
+    // Obtener la información actualizada del curso
+    const [course] = await db.query('SELECT * FROM courses WHERE course_id = ?', [course_id]);
+    const [sections] = await db.query('SELECT * FROM sections WHERE course_id = ?', [course_id]);
+    const [ratings] = await db.query(
+      'SELECT r.rating, r.comment, r.created_at, u.first_name, u.last_name FROM ratings r JOIN users u ON r.user_id = u.user_id WHERE r.course_id = ? ORDER BY r.created_at DESC',
+      [course_id]
+    );
+
+    // Calcular el promedio de las valoraciones y el total de valoraciones
+    const [averageResult] = await db.query(
+      'SELECT AVG(rating) AS averageRating, COUNT(*) AS totalRatings FROM ratings WHERE course_id = ?',
+      [course_id]
+    );
+    const averageRating = averageResult[0].averageRating ? parseFloat(averageResult[0].averageRating).toFixed(1) : '0.0';
+    const totalRatings = averageResult[0].totalRatings || 0;
+
+    // Renderizar la vista actualizada
+    res.render('course_player', {
+      course: course[0],
+      sections,
+      ratings,
+      averageRating,
+      totalRatings,
+      userId: req.session.userId,
+      hasRated, // Pasamos hasRated a la vista
+      successMessage: req.flash('successMessage'),
+      errorMessage: null
+    });
   } catch (err) {
+    console.error('Error al añadir la valoración:', err);
     req.flash('errorMessage', 'Hubo un error al añadir la valoración.');
     res.redirect('back');
   }
