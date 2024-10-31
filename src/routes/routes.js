@@ -214,14 +214,18 @@ router.post("/profile/delete-link", isAuthenticated, async (req, res) => {
   }
 });
 // ---- RUTAS DE CURSOS ----
+
 // Página de todos los cursos (requiere autenticación)
 router.get("/course", isAuthenticated, async (req, res) => {
   try {
       // Obtener todos los cursos de la base de datos
       const [courses] = await db.query('SELECT * FROM courses');
+      
+      // Pasar el ID del usuario actual para diferenciar si el usuario es el creador del curso
+      const userId = req.session.userId;
 
-      // Renderizar la vista 'course.ejs' con los cursos obtenidos
-      res.render("course.ejs", { courses });
+      // Renderizar la vista 'course.ejs' con los cursos obtenidos y el usuario actual
+      res.render("course.ejs", { courses, userId });
   } catch (err) {
       console.error("Error al cargar la página del curso:", err);
       req.flash('errorMessage', 'Hubo un error al cargar los cursos.');
@@ -233,13 +237,94 @@ router.get("/course", isAuthenticated, async (req, res) => {
 router.get("/create_course", isAuthenticated, async (req, res) => {
   try {
     const [categories] = await db.query('SELECT category_id, name FROM categories');
-    res.render("create_course.ejs", { categories });
+    res.render("create_course.ejs", { course: null, categories }); // Pasar `course: null` para evitar errores en la vista
   } catch (err) {
+    console.error("Error al cargar la página de creación de curso:", err);
     res.status(500).json({ error: 'Error en el servidor al cargar la página de creación de curso.' });
   }
 });
 
-// Crear un curso
+// Ruta para mostrar el formulario de edición de curso (requiere autenticación)
+router.get('/course/edit/:courseId', isAuthenticated, async (req, res) => {
+  const courseId = req.params.courseId;
+
+  try {
+    // Obtener el curso por ID
+    const [courseResult] = await db.query('SELECT * FROM courses WHERE course_id = ?', [courseId]);
+    const course = courseResult[0];
+
+    // Validar si el curso existe
+    if (!course) {
+      req.flash('errorMessage', 'El curso no existe.');
+      return res.redirect('/my_courses');
+    }
+
+    // Obtener todas las categorías para el formulario de selección
+    const [categories] = await db.query('SELECT category_id, name FROM categories');
+
+    // Renderizar la vista de edición con los datos del curso y categorías
+    res.render('create_course.ejs', { course, categories });
+  } catch (err) {
+    console.error("Error al cargar el curso para edición:", err);
+    req.flash('errorMessage', 'Hubo un error al cargar el curso.');
+    res.redirect('/my_courses');
+  }
+});
+
+// Ruta para procesar la edición de un curso (requiere autenticación)
+router.post('/course/edit/:courseId', isAuthenticated, async (req, res) => {
+  const courseId = req.params.courseId;
+  const { name, description, language, cover_image, category, requirements, section_title, video_url } = req.body;
+
+  try {
+    // Iniciar transacción
+    await db.query('START TRANSACTION');
+
+    // Actualizar los datos principales del curso
+    await db.query(
+      'UPDATE courses SET name = ?, description = ?, language = ?, cover_image = ? WHERE course_id = ?',
+      [name, description, language, cover_image, courseId]
+    );
+
+    // Actualizar categoría
+    if (category) {
+      await db.query('DELETE FROM course_categories WHERE course_id = ?', [courseId]);
+      await db.query('INSERT INTO course_categories (course_id, category_id) VALUES (?, ?)', [courseId, category]);
+    }
+
+    // Actualizar requisitos
+    await db.query('DELETE FROM requirements WHERE course_id = ?', [courseId]);
+    if (requirements && Array.isArray(requirements)) {
+      for (let requirement of requirements) {
+        if (requirement.trim()) {
+          await db.query('INSERT INTO requirements (course_id, requirement_text) VALUES (?, ?)', [courseId, requirement]);
+        }
+      }
+    }
+
+    // Actualizar secciones
+    await db.query('DELETE FROM sections WHERE course_id = ?', [courseId]);
+    if (section_title && video_url && Array.isArray(section_title) && Array.isArray(video_url)) {
+      for (let i = 0; i < section_title.length; i++) {
+        if (section_title[i].trim() && video_url[i].trim()) {
+          await db.query('INSERT INTO sections (course_id, title, video_url) VALUES (?, ?, ?)', [courseId, section_title[i], video_url[i]]);
+        }
+      }
+    }
+
+    // Confirmar transacción
+    await db.query('COMMIT');
+    req.flash('successMessage', 'Curso actualizado exitosamente.');
+    res.redirect('/my_courses');
+  } catch (err) {
+    await db.query('ROLLBACK');
+    console.error("Error al actualizar el curso:", err);
+    req.flash('errorMessage', 'Hubo un error al actualizar el curso.');
+    res.redirect('/course/edit/' + courseId);
+  }
+});
+
+// Crear un curso (requiere autenticación)
 router.post('/create_course', isAuthenticated, async (req, res) => {
   const { name, description, language, cover_image, category, requirements, section_title, video_url } = req.body;
   const creator_id = req.session.userId;
@@ -277,13 +362,15 @@ router.post('/create_course', isAuthenticated, async (req, res) => {
 
     await db.query('COMMIT');
     req.flash('successMessage', 'Curso creado exitosamente.');
-    res.redirect('/create_course');
+    res.redirect('/my_courses');
   } catch (err) {
     await db.query('ROLLBACK');
+    console.error("Error al crear el curso:", err);
     req.flash('errorMessage', `Hubo un error al crear el curso: ${err.message}`);
     res.redirect('/create_course');
   }
 });
+
 
 // Ruta GET para mostrar los cursos creados por el profesor
 router.get('/my_courses', isAuthenticated, async (req, res) => {

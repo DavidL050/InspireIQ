@@ -404,6 +404,16 @@ main {
     border-color: #6c757d;
 }
 
+.btn-edit {
+    background-color: #ff9800; /* Un color diferente */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+
 /* Additional responsive adjustments */
 @media (max-width: 768px) {
     .course-card {
@@ -871,7 +881,7 @@ main {
 
 /* Footer Styles */
 footer {
-    margin-top: auto; /* El footer estará siempre en la parte inferior */
+    margin-top: auto; 
     background-color: #1e1e1e;
     color: #fff;
     padding: 15px 0;
