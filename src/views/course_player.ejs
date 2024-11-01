@@ -15,20 +15,6 @@
         <%- include('partials/navigation') %>
     </header>
 
-    <div class="container mt-4">
-        <!-- Mostrar mensajes flash -->
-        <% if (successMessage && successMessage.length > 0) { %>
-            <div class="alert alert-success">
-                <%= successMessage[0] %>
-            </div>
-        <% } %>
-        <% if (errorMessage && errorMessage.length > 0) { %>
-            <div class="alert alert-danger">
-                <%= errorMessage[0] %>
-            </div>
-        <% } %>
-    </div>
-
     <div class="container-fluid player-container">
         <div class="row player-content">
             <!-- Video Section -->
