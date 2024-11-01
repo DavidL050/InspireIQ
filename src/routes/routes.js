@@ -421,6 +421,7 @@ router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
   }
 });
 
+
 // ---- PAGINA DE COURSE PLAYER ----
 router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;

@@ -4,7 +4,7 @@ import mysql from 'mysql2/promise';  // Cambia a la versión promise
 const connection = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: '12345678',
+    password: '840862_Mv',
     database: 'inspire_iq'
 });
 
