@@ -89,7 +89,7 @@
             <% } %>
 
             <div class="course-form-container">
-                <h1 class="text-center" style="color: var(--primary-color);">
+                <h1 class="text-center" style="color: black; font-weight: bold;">
                     <%= course ? 'Editar Curso' : 'Crear Nuevo Curso' %>
                 </h1>
                 
@@ -164,11 +164,11 @@
                             <div class="form-section">
                                 <div class="section-title">
                                     <i class="material-icons">list</i>
-                                    Requerimientos del Curso
+                                    Habilidades Necesarias
                                 </div>
                                 <div id="requirements" class="mb-3">
                                     <div class="requirement-item">
-                                        <input type="text" class="form-control mb-2" name="requirements[]" placeholder="Agregar requerimiento">
+                                        <input type="text" class="form-control mb-2" name="requirements[]" placeholder="Agregar habilidad">
                                         <button type="button" class="remove-btn" onclick="removeRequirement(this)">
                                             <i class="material-icons align-middle">close</i>
                                         </button>
@@ -176,7 +176,7 @@
                                 </div>
                                 <button type="button" class="btn btn-outline-secondary" onclick="addRequirement()">
                                     <i class="material-icons align-middle">add</i>
-                                    Agregar requerimiento
+                                    Agregar habilidad
                                 </button>
                             </div>
 

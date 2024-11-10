@@ -652,16 +652,18 @@ main {
 }
 
 .brand-name {
-    font-size: 4rem;
+    font-size: 5.5rem;
     font-weight: 700;
     margin-bottom: 1rem;
+    text-shadow: 5px 5px 5px rgba(0, 0, 0, 0.96);
     color: #333;
 }
 
 .brand-slogan {
-    font-size: 1.5rem;
+    font-size: 2.5rem;
     color: #666;
     line-height: 1.4;
+    text-shadow: 5px 5px 5px rgba(0, 0, 0, 0.96);
 }
 
 .testimonials-column {
