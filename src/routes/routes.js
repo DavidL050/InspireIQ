@@ -114,11 +114,29 @@ router.get("/logout", async (req, res) => {
 // Página de perfil (requiere autenticación)
 router.get("/profile", isAuthenticated, async (req, res) => {
   try {
+    // Obtener información del usuario
     const user = await getUserById(req.session.userId);
-    const coursesProgress = await getUserCourseProgress(req.session.userId);
+    
+    // Obtener progreso de los cursos en los que está inscrito
+    const coursesProgress = await db.query(`
+      SELECT c.name AS course_name, cp.progress, e.status
+      FROM enrollments e
+      JOIN courses c ON e.course_id = c.course_id
+      LEFT JOIN course_progress cp ON cp.user_id = e.user_id AND cp.course_id = e.course_id
+      WHERE e.user_id = ?
+    `, [req.session.userId]);
+
+    // Obtener enlaces sociales del usuario
     const userLinks = await getUserLinks(req.session.userId);
-    res.render("profile.ejs", { user, coursesProgress, userLinks });
+    
+    // Renderizar la vista 'profile.ejs' pasando todos los datos
+    res.render("profile.ejs", { 
+      user, 
+      coursesProgress: coursesProgress[0], 
+      userLinks 
+    });
   } catch (err) {
+    console.error("Error al obtener el perfil del usuario:", err);
     res.status(500).json({ error: 'Error en el servidor al obtener el perfil del usuario' });
   }
 });
@@ -126,7 +144,6 @@ router.get("/profile", isAuthenticated, async (req, res) => {
 // Ruta para actualizar la foto de perfil
 router.post('/profile/upload-photo', isAuthenticated, upload.single('profilePhoto'), async (req, res) => {
   try {
-    // Check if file was uploaded
     if (!req.file) {
       return res.status(400).json({ message: 'Por favor, selecciona una imagen.' });
     }
@@ -134,10 +151,8 @@ router.post('/profile/upload-photo', isAuthenticated, upload.single('profilePhot
     const userId = req.session.userId;
     const profileImage = `/uploads/${req.file.filename}`;
 
-    // Update database with new profile image
     const [result] = await db.query('UPDATE users SET profile_image = ? WHERE user_id = ?', [profileImage, userId]);
 
-    // Check if update was successful
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'No se pudo actualizar la foto de perfil.' });
     }
@@ -147,10 +162,11 @@ router.post('/profile/upload-photo', isAuthenticated, upload.single('profilePhot
       profileImage: profileImage
     });
   } catch (error) {
-    console.error('Error uploading profile photo:', error);
+    console.error('Error al subir la foto de perfil:', error);
     res.status(500).json({ message: 'Hubo un error al subir la foto de perfil.' });
   }
 });
+
 // Guardar cambios de perfil y agregar enlaces
 router.post("/profile/save", isAuthenticated, async (req, res) => {
   const { firstName, lastName, email, biography, linkName, linkUrl, action, linkId } = req.body;
@@ -213,6 +229,7 @@ router.post("/profile/delete-link", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar el enlace.' });
   }
 });
+
 // ---- RUTAS DE CURSOS ----
 
 // Página de todos los cursos (requiere autenticación)
@@ -430,108 +447,132 @@ router.get('/my_courses', isAuthenticated, async (req, res) => {
 });
 
 // Página de detalles de curso
+// ---- RUTA DE DETALLES DEL CURSO ----
 router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;
+  const userId = req.session.userId;
 
   try {
     // Obtener los detalles del curso
     const [courseDetails] = await db.query('SELECT * FROM courses WHERE course_id = ?', [courseId]);
-
-    // Validar si el curso existe
     if (courseDetails.length === 0) {
       req.flash('errorMessage', 'El curso no existe.');
       return res.redirect('/my_courses');
     }
 
-    // Obtener solo las 3 calificaciones más recientes
-    const [ratings] = await db.query('SELECT r.rating, r.comment, r.created_at, u.first_name, u.last_name FROM ratings r JOIN users u ON r.user_id = u.user_id WHERE r.course_id = ? ORDER BY r.created_at DESC LIMIT 3', [courseId]);
+    const course = courseDetails[0];
 
-    // Obtener el promedio de las calificaciones
-    const [averageRatingResult] = await db.query('SELECT AVG(rating) as averageRating FROM ratings WHERE course_id = ?', [courseId]);
-    const averageRating = averageRatingResult[0].averageRating || 0;
+    // Verificar si el usuario está inscrito en el curso
+    const [enrollmentData] = await db.query(
+      'SELECT * FROM enrollments WHERE user_id = ? AND course_id = ?',
+      [userId, courseId]
+    );
 
-  
-    // Renderizar la vista
-    res.render("course_details.ejs", {
-      course: courseDetails[0],
-      ratings: ratings, // Las 3 calificaciones más recientes
-      averageRating: averageRating, // El promedio de calificaciones
-      courseId: courseId,
-      user: req.session.userId // Necesario para el formulario
-    });
+    // Definir si el curso ha sido comenzado
+    const hasStarted = enrollmentData.length > 0;
+
+    // Renderizar la vista y pasar los detalles del curso y el estado `hasStarted`
+    res.render("course_details.ejs", { course, hasStarted });
   } catch (err) {
-    // Manejo de errores
+    console.error("Error al cargar los detalles del curso:", err);
     res.status(500).json({ error: 'Error en el servidor al cargar los detalles del curso' });
   }
 });
 
+// ---- RUTA DEL REPRODUCTOR DE CURSO ----
 
-// ---- PAGINA DE COURSE PLAYER ----
+// Función auxiliar para transformar URLs de YouTube
+const transformYouTubeUrl = (url) => {
+  try {
+    if (!url) return '';
+    let videoId = '';
+    const urlObj = new URL(url);
+
+    if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
+      videoId = urlObj.searchParams.get('v');
+    } else if (urlObj.hostname === 'youtu.be') {
+      videoId = urlObj.pathname.substring(1);
+    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  } catch (e) {
+    console.error('Error transformando URL de YouTube:', e);
+    return '';
+  }
+};
+
 router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;
   const userId = req.session.userId;
 
   try {
-    // Consulta para obtener los detalles del curso
+    // Obtener detalles del curso y verificar inscripción
     const [courseDetails] = await db.query(`
-      SELECT courses.*, categories.name AS category
-      FROM courses
-      LEFT JOIN course_categories ON courses.course_id = course_categories.course_id
-      LEFT JOIN categories ON course_categories.category_id = categories.category_id
-      WHERE courses.course_id = ?`, [courseId]);
+      SELECT 
+        c.*, cat.name AS category, e.progress, e.status AS enrollment_status
+      FROM courses c
+      LEFT JOIN course_categories cc ON c.course_id = cc.course_id
+      LEFT JOIN categories cat ON cc.category_id = cat.category_id
+      LEFT JOIN enrollments e ON c.course_id = e.course_id AND e.user_id = ?
+      WHERE c.course_id = ?`, [userId, courseId]);
 
-    // Verificar si el curso existe
-    if (courseDetails.length === 0) {
-      req.flash('errorMessage', 'El curso no existe.');
-      return res.redirect('/my_courses');
+    if (!courseDetails.length) {
+      req.flash('errorMessage', 'El curso no existe o no estás inscrito.');
+      return res.redirect('/course_details/' + courseId);
     }
 
-    // Consulta para obtener las secciones del curso
-    const sectionsResult = await db.query(
-      'SELECT section_id, course_id, title, video_url FROM sections WHERE course_id = ?', 
+    const course = courseDetails[0];
+
+    // Obtener secciones del curso
+    const [sectionsResult] = await db.query(
+      'SELECT section_id, title, video_url FROM sections WHERE course_id = ?',
       [courseId]
     );
-    const sections = sectionsResult[0];
-
-    // Transformar las URLs de YouTube para que sean reproducibles en iframe
-    const processedSections = sections.map(section => ({
+    
+    const processedSections = sectionsResult.map(section => ({
       ...section,
       video_url: transformYouTubeUrl(section.video_url)
     }));
 
-    // Consulta para obtener las valoraciones del curso
-    const ratingsResult = await db.query(
-      'SELECT r.rating, r.comment, r.created_at, u.first_name, u.last_name FROM ratings r JOIN users u ON r.user_id = u.user_id WHERE r.course_id = ?',
-      [courseId]
-    );
-    const ratings = ratingsResult[0];
+    // Obtener valoraciones y progreso del usuario
+    const [ratings] = await db.query(`
+      SELECT r.rating, r.comment, r.created_at, u.first_name, u.last_name
+      FROM ratings r JOIN users u ON r.user_id = u.user_id
+      WHERE r.course_id = ? ORDER BY r.created_at DESC`, [courseId]);
 
-    // Consulta para obtener el promedio de las calificaciones
-    const [averageRatingResult] = await db.query(
-      'SELECT AVG(rating) AS averageRating, COUNT(*) AS totalRatings FROM ratings WHERE course_id = ?', 
-      [courseId]
-    );
-    const { averageRating = 0, totalRatings = 0 } = averageRatingResult[0] || {};
+    const [[averageRatingResult]] = await db.query(`
+      SELECT AVG(rating) AS averageRating, COUNT(*) AS totalRatings
+      FROM ratings WHERE course_id = ?`, [courseId]);
 
-    // Verificar si el usuario ya ha valorado el curso
+    const averageRating = averageRatingResult?.averageRating || 0;
+    const totalRatings = averageRatingResult?.totalRatings || 0;
+
+       // Comprobar si el usuario ya ha valorado el curso
     const [userRating] = await db.query(
-      'SELECT * FROM ratings WHERE course_id = ? AND user_id = ?',
-      [courseId, userId]
-    );
+        'SELECT * FROM ratings WHERE course_id = ? AND user_id = ?',
+        [courseId, userId]
+      );
     const hasRated = userRating.length > 0;
 
-    // Renderizar la página del reproductor de curso
+    // Obtener el progreso actual del usuario en el curso
+    const [progressData] = await db.query(`
+      SELECT progress, last_viewed_section FROM course_progress
+      WHERE user_id = ? AND course_id = ?`, [userId, courseId]);
+
+    const currentProgress = progressData[0]?.progress || 0;
+    const lastViewedSection = progressData[0]?.last_viewed_section || processedSections[0]?.section_id;
+
     res.render("course_player", {
-      course: courseDetails[0],             // Detalles del curso
-      sections: processedSections,          // Secciones procesadas
-      ratings,                              // Valoraciones
-      averageRating: parseFloat(averageRating).toFixed(1), // Promedio de valoraciones, formateado a un decimal
-      totalRatings,                         // Total de valoraciones
-      userId,                               // ID del usuario autenticado
-      hasRated,                             // Indica si el usuario ya ha valorado
-      successMessage: req.flash('successMessage'),
-      errorMessage: req.flash('errorMessage')
+      course,
+      sections: processedSections,
+      currentSection: lastViewedSection,
+      ratings,
+      averageRating: parseFloat(averageRating).toFixed(1),
+      totalRatings,
+      userId,
+      hasRated,
+      currentProgress
     });
+
   } catch (err) {
     console.error('Error al cargar la página del curso:', err);
     req.flash('errorMessage', 'Hubo un problema al cargar la página del curso.');
@@ -539,56 +580,118 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
   }
 });
 
-// Función auxiliar para transformar URLs de YouTube
-function transformYouTubeUrl(url) {
-  try {
-    if (!url) return '';
-
-    // Extraer el ID del video de YouTube
-    let videoId = '';
-    const urlObj = new URL(url);
-    
-    if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
-      videoId = urlObj.searchParams.get('v');
-    } else if (urlObj.hostname === 'youtu.be') {
-      videoId = urlObj.pathname.substring(1);
-    }
-
-    // Retornar la URL embebible de YouTube
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
-  } catch (e) {
-    console.error('Error transformando URL de YouTube:', e);
-    return '';
-  }
-}
-
-
-// ---- RUTAS DE ENROLLMENTS ----
-
-// Ruta POST para matricular a un usuario en un curso (solo para estudiantes)
-router.post('/enroll', isAuthenticated, async (req, res) => {
-  const { user_id, course_id } = req.body;
+// ---- RUTA PARA INSCRIPCIÓN ----
+router.post("/course/:courseId/enroll", isAuthenticated, async (req, res) => {
+  const { courseId } = req.params;
+  const userId = req.session.userId;
 
   try {
-    const userRole = req.session.userRole;
+    // Iniciar transacción
+    await db.query('START TRANSACTION');
 
-    if (userRole !== 'student') {
-      req.flash('errorMessage', 'Solo los estudiantes pueden matricularse en cursos.');
-      return res.redirect('back');
+    // Verificar si el usuario ya está inscrito en el curso
+    const [existingEnrollment] = await db.query(
+      'SELECT * FROM enrollments WHERE user_id = ? AND course_id = ?',
+      [userId, courseId]
+    );
+
+    if (existingEnrollment.length > 0) {
+      // Si ya está inscrito, devolver un mensaje y no insertar de nuevo
+      await db.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        message: 'Ya estás inscrito en este curso',
+        redirectUrl: `/course_player/${courseId}`
+      });
     }
 
-    if (!user_id || !course_id) {
-      req.flash('errorMessage', 'Usuario o curso no proporcionado.');
-      return res.redirect('back');
+    // Insertar la inscripción en la tabla enrollments
+    const [enrollmentResult] = await db.query(
+      'INSERT INTO enrollments (user_id, course_id, enrollment_date, progress, status) VALUES (?, ?, NOW(), 0, ?)',
+      [userId, courseId, 'enrolled']
+    );
+
+    if (enrollmentResult.affectedRows === 0) {
+      // Si no se pudo insertar la inscripción, devolver un error
+      await db.query('ROLLBACK');
+      return res.status(500).json({
+        success: false,
+        message: 'No se pudo completar la inscripción en el curso'
+      });
     }
 
-    await db.query('INSERT INTO enrollments (user_id, course_id, enrollment_date, progress, status) VALUES (?, ?, NOW(), 0, ?)', [user_id, course_id, 'active']);
-    
-    req.flash('successMessage', 'Te has matriculado correctamente en el curso.');
-    res.redirect('/courses');
+    // Inicializar el progreso en la tabla course_progress
+    const [progressResult] = await db.query(
+      'INSERT INTO course_progress (user_id, course_id, progress) VALUES (?, ?, 0)',
+      [userId, courseId]
+    );
+
+    if (progressResult.affectedRows === 0) {
+      // Si no se pudo inicializar el progreso, devolver un error
+      await db.query('ROLLBACK');
+      return res.status(500).json({
+        success: false,
+        message: 'No se pudo inicializar el progreso del curso'
+      });
+    }
+
+    // Confirmar la transacción
+    await db.query('COMMIT');
+
+    // Enviar respuesta de éxito con redirección al reproductor del curso
+    res.status(201).json({
+      success: true,
+      message: 'Inscripción exitosa',
+      redirectUrl: `/course_player/${courseId}`
+    });
+
   } catch (err) {
-    req.flash('errorMessage', 'Hubo un error al matricular al usuario.');
-    res.redirect('back');
+    // Revertir la transacción en caso de error
+    await db.query('ROLLBACK');
+    console.error("Error en la inscripción:", err);
+    res.status(500).json({
+      success: false,
+      message: 'Error en el servidor al procesar la inscripción'
+    });
+  }
+});
+
+// ---- RUTA PARA ACTUALIZAR PROGRESO ----
+
+router.post("/course/:courseId/update-progress", isAuthenticated, async (req, res) => {
+  const { courseId } = req.params;
+  const userId = req.session.userId;
+  const { completedSections, totalSections } = req.body;
+
+  try {
+    await db.query('START TRANSACTION');
+
+    const progress = Math.floor((completedSections / totalSections) * 100);
+
+    await db.query(
+      'UPDATE enrollments SET progress = ? WHERE user_id = ? AND course_id = ?',
+      [progress, userId, courseId]
+    );
+
+    await db.query(
+      'UPDATE course_progress SET progress = ? WHERE user_id = ? AND course_id = ?',
+      [progress, userId, courseId]
+    );
+
+    await db.query('COMMIT');
+
+    res.json({
+      success: true,
+      progress
+    });
+
+  } catch (err) {
+    await db.query('ROLLBACK');
+    console.error("Error al actualizar el progreso:", err);
+    res.status(500).json({
+      success: false,
+      message: 'Error al actualizar el progreso'
+    });
   }
 });
 
@@ -662,27 +765,5 @@ router.post('/rate_course', isAuthenticated, async (req, res) => {
   }
 });
 
-
-// ---- RUTAS DE RESOURCES ----
-
-// Ruta POST para agregar un recurso a una sección
-router.post('/add_resource', isAuthenticated, async (req, res) => {
-  const { section_id, resource_name, resource_url } = req.body;
-
-  try {
-    if (!section_id || !resource_name || !resource_url) {
-      req.flash('errorMessage', 'Faltan campos obligatorios.');
-      return res.redirect('back');
-    }
-
-    await db.query('INSERT INTO resources (section_id, resource_name, resource_url) VALUES (?, ?, ?)', [section_id, resource_name, resource_url]);
-
-    req.flash('successMessage', 'Recurso añadido correctamente.');
-    res.redirect(`/sections/${section_id}`);
-  } catch (err) {
-    req.flash('errorMessage', 'Hubo un error al añadir el recurso.');
-    res.redirect('back');
-  }
-});
 
 export default router;

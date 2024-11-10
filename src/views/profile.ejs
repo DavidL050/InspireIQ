@@ -169,6 +169,37 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Nueva sección para mostrar el progreso en cursos -->
+                <div class="profile-card card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4 fw-bold">Progreso en los Cursos</h5>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Curso</th>
+                                    <th>Progreso</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (coursesProgress.length > 0) { %>
+                                    <% coursesProgress.forEach(course => { %>
+                                        <tr>
+                                            <td><%= course.course_name %></td>
+                                            <td><%= course.progress %> %</td>
+                                            <td><%= course.status %></td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="3" class="text-muted text-center">No estás inscrito en ningún curso.</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
