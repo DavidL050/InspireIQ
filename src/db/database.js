@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';  // Cambia a la versión promise
+import mysql from 'mysql2/promise';  
 
 // Crear una conexión utilizando Promesas
 const connection = mysql.createPool({

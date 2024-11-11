@@ -7,6 +7,81 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <title>Mis Cursos</title>
+    <style>
+        /* Estilos personalizados para mejorar la tabla */
+        .table-container {
+            margin-top: 50px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        
+        th {
+            text-align: left;
+            font-weight: bold;
+            padding: 12px;
+            background-color: #f8f9fa;
+        }
+
+        td {
+            background-color: #f7f7f7;
+            padding: 16px;
+            border-radius: 8px;
+            vertical-align: middle;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        td:first-child, td:last-child {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        td:last-child {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        /* Estilos para los botones */
+        .btn {
+            font-size: 14px;
+            padding: 10px 16px;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            margin-bottom: 8px; /* Espacio entre botones */
+            width: 80px; /* Tamaño uniforme para los botones */
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-warning {
+            background-color: #ffd761;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+    </style>
 </head>
 <body>
 
@@ -27,11 +102,11 @@
         </div>
     <% } %>
 
-    <div class="container mt-5">
+    <div class="container table-container">
         <h1 class="mb-4">Mis Cursos</h1>
     
         <% if (courses.length > 0) { %>
-            <table class="table table-striped">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>Nombre del Curso</th>
@@ -42,16 +117,18 @@
                 <tbody>
                     <% courses.forEach(course => { %>
                         <tr>
-                            <td><a href="/course_details/<%= course.course_id %>" class="text-decoration-none"><%= course.name %></a></td>
+                            <td><a href="/course_details/<%= course.course_id %>" class="text-decoration-none text-primary fw-bold"><%= course.name %></a></td>
                             <td><%= course.description %></td>
                             <td>
-                                <a href="/course_details/<%= course.course_id %>" class="btn btn-primary">Detalles</a>
-                                <a href="/course/edit/<%= course.course_id %>" class="btn btn-warning">Editar</a>
-                                
-                                <!-- Formulario para eliminación -->
-                                <form action="/course/delete/<%= course.course_id %>" method="POST" style="display: inline;" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este curso?');">
-                                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                                </form>
+                                <div class="d-flex flex-column">
+                                    <a href="/course_details/<%= course.course_id %>" class="btn btn-primary mb-1">Detalles</a>
+                                    <a href="/course/edit/<%= course.course_id %>" class="btn btn-warning mb-1">Editar</a>
+                                    
+                                    <!-- Formulario para eliminación -->
+                                    <form action="/course/delete/<%= course.course_id %>" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este curso?');">
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     <% }); %>

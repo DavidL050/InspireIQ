@@ -11,7 +11,7 @@ $(document).ready(function() {
         }
     });
 
-    // Interceptar todos los clicks en enlaces que requieran autenticación
+    // Interceptar todos los clics en enlaces que requieran autenticación
     $(document).on('click', 'a[data-requires-auth="true"]', function(e) {
         e.preventDefault();
         const href = $(this).attr('href');
@@ -48,11 +48,23 @@ $(document).ready(function() {
         e.preventDefault();
         $('#student-registration-form').hide();
         $('#teacher-registration-form').show();
+
+        // Transferir valores a los campos del formulario de profesor
+        $('#teacher-name').val($('#name').val());
+        $('#teacher-lastname').val($('#lastname').val());
+        $('#teacher-email').val($('#email').val());
+        $('#teacher-password').val($('#password').val());
     });
 
     $('#back-to-student-form').click(function() {
         $('#teacher-registration-form').hide();
         $('#student-registration-form').show();
+
+        // Transferir valores a los campos del formulario de estudiante
+        $('#name').val($('#teacher-name').val());
+        $('#lastname').val($('#teacher-lastname').val());
+        $('#email').val($('#teacher-email').val());
+        $('#password').val($('#teacher-password').val());
     });
 
     // Función para mostrar alertas en los modales
@@ -180,14 +192,10 @@ $(document).ready(function() {
         $('#signin-form').trigger('reset');
         $('#signinAlert').hide();
     });
-});
 
-$(document).ready(function() {
     // Detectar si se debe abrir el modal de inicio de sesión
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('login') === 'true') {
         $('#signinModal').modal('show');
     }
-
-    // Aquí mantén el resto de tu código de manejo de modales y autenticación
 });

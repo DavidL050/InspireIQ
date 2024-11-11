@@ -308,6 +308,7 @@ router.post('/create_course', isAuthenticated, async (req, res) => {
 });
 
 
+
 // Ruta para mostrar el formulario de edición de curso (requiere autenticación)
 router.get('/course/edit/:courseId', isAuthenticated, async (req, res) => {
   const courseId = req.params.courseId;
@@ -326,14 +327,22 @@ router.get('/course/edit/:courseId', isAuthenticated, async (req, res) => {
     // Obtener todas las categorías para el formulario de selección
     const [categories] = await db.query('SELECT category_id, name FROM categories');
 
-    // Renderizar la vista de edición con los datos del curso y categorías
-    res.render('create_course.ejs', { course, categories });
+    // Obtener las habilidades (requirements) del curso
+    const [requirements] = await db.query('SELECT requirement_text FROM requirements WHERE course_id = ?', [courseId]);
+    const skills = requirements.map(requirement => requirement.requirement_text);
+
+    // Obtener las secciones del curso
+    const [sections] = await db.query('SELECT title, video_url FROM sections WHERE course_id = ?', [courseId]);
+
+    // Renderizar la vista de edición con los datos del curso, categorías, habilidades y secciones
+    res.render('create_course.ejs', { course, categories, skills, sections });
   } catch (err) {
     console.error("Error al cargar el curso para edición:", err);
     req.flash('errorMessage', 'Hubo un error al cargar el curso.');
     res.redirect('/my_courses');
   }
 });
+
 
 // Ruta para procesar la edición de un curso (requiere autenticación)
 router.post('/course/edit/:courseId', isAuthenticated, async (req, res) => {
@@ -472,7 +481,7 @@ router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
     const hasStarted = enrollmentData.length > 0;
 
     // Renderizar la vista y pasar los detalles del curso y el estado `hasStarted`
-    res.render("course_details.ejs", { course, hasStarted });
+    res.render("course_details.ejs", { course, hasStarted, userRole: req.session.userRole });
   } catch (err) {
     console.error("Error al cargar los detalles del curso:", err);
     res.status(500).json({ error: 'Error en el servidor al cargar los detalles del curso' });
@@ -481,24 +490,66 @@ router.get("/course_details/:courseId", isAuthenticated, async (req, res) => {
 
 // ---- RUTA DEL REPRODUCTOR DE CURSO ----
 
-// Función auxiliar para transformar URLs de YouTube
-const transformYouTubeUrl = (url) => {
+// Función auxiliar para transformar URLs de YouTube en URLs embebidas con soporte para tiempo de inicio
+function transformYouTubeUrl(url) {
   try {
     if (!url) return '';
-    let videoId = '';
-    const urlObj = new URL(url);
 
-    if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
-      videoId = urlObj.searchParams.get('v');
+    const urlObj = new URL(url);
+    let videoId = '';
+    let startTime = '';
+
+    // Detectar el ID del video y el tiempo de inicio en varios formatos de URL
+    if (urlObj.hostname.includes('youtube.com')) {
+      if (urlObj.pathname.includes('/embed/')) {
+        videoId = urlObj.pathname.split('/embed/')[1];
+        startTime = urlObj.searchParams.get('start');
+      } else if (urlObj.pathname.includes('/watch')) {
+        videoId = urlObj.searchParams.get('v');
+        startTime = urlObj.searchParams.get('t');
+      }
     } else if (urlObj.hostname === 'youtu.be') {
       videoId = urlObj.pathname.substring(1);
+      startTime = urlObj.searchParams.get('t');
+    } else {
+      console.error('Formato de URL no soportado:', url);
+      return '';
     }
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+
+    // Convertir el tiempo de inicio en segundos si está presente
+    let startParam = '';
+    if (startTime) {
+      const timeInSeconds = convertYouTubeTimeToSeconds(startTime);
+      startParam = `?start=${timeInSeconds}`;
+    }
+
+    // Retornar la URL de embed con o sin el parámetro de inicio
+    return videoId ? `https://www.youtube.com/embed/${videoId}${startParam}` : '';
   } catch (e) {
     console.error('Error transformando URL de YouTube:', e);
     return '';
   }
-};
+}
+
+// Función para convertir el tiempo de YouTube a segundos
+function convertYouTubeTimeToSeconds(time) {
+  const match = time.match(/(\d+)(h|m|s)/g);
+  if (!match) return parseInt(time, 10);
+
+  let seconds = 0;
+  match.forEach(part => {
+    const unit = part.slice(-1);
+    const amount = parseInt(part.slice(0, -1), 10);
+
+    if (unit === 'h') seconds += amount * 3600;
+    if (unit === 'm') seconds += amount * 60;
+    if (unit === 's') seconds += amount;
+  });
+
+  return seconds;
+}
+
+
 
 router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;
@@ -528,6 +579,7 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
       [courseId]
     );
     
+    // Transformar URLs de YouTube para embebido
     const processedSections = sectionsResult.map(section => ({
       ...section,
       video_url: transformYouTubeUrl(section.video_url)
@@ -546,11 +598,11 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
     const averageRating = averageRatingResult?.averageRating || 0;
     const totalRatings = averageRatingResult?.totalRatings || 0;
 
-       // Comprobar si el usuario ya ha valorado el curso
+    // Comprobar si el usuario ya ha valorado el curso
     const [userRating] = await db.query(
-        'SELECT * FROM ratings WHERE course_id = ? AND user_id = ?',
-        [courseId, userId]
-      );
+      'SELECT * FROM ratings WHERE course_id = ? AND user_id = ?',
+      [courseId, userId]
+    );
     const hasRated = userRating.length > 0;
 
     // Obtener el progreso actual del usuario en el curso
@@ -560,11 +612,13 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
 
     const currentProgress = progressData[0]?.progress || 0;
     const lastViewedSection = progressData[0]?.last_viewed_section || processedSections[0]?.section_id;
+    const currentSectionVideoUrl = processedSections.find(section => section.section_id === lastViewedSection)?.video_url || processedSections[0]?.video_url;
 
     res.render("course_player", {
       course,
       sections: processedSections,
       currentSection: lastViewedSection,
+      currentSectionVideoUrl,
       ratings,
       averageRating: parseFloat(averageRating).toFixed(1),
       totalRatings,
@@ -579,6 +633,7 @@ router.get("/course_player/:courseId", isAuthenticated, async (req, res) => {
     res.redirect('/my_courses');
   }
 });
+
 
 // ---- RUTA PARA INSCRIPCIÓN ----
 router.post("/course/:courseId/enroll", isAuthenticated, async (req, res) => {
@@ -657,24 +712,40 @@ router.post("/course/:courseId/enroll", isAuthenticated, async (req, res) => {
 });
 
 // ---- RUTA PARA ACTUALIZAR PROGRESO ----
-
 router.post("/course/:courseId/update-progress", isAuthenticated, async (req, res) => {
   const { courseId } = req.params;
   const userId = req.session.userId;
-  const { completedSections, totalSections } = req.body;
+  const { lastViewedSection, completedSections, totalSections } = req.body;
 
   try {
     await db.query('START TRANSACTION');
 
+    // Calculate progress as a percentage
     const progress = Math.floor((completedSections / totalSections) * 100);
 
-    await db.query(
-      'UPDATE enrollments SET progress = ? WHERE user_id = ? AND course_id = ?',
-      [progress, userId, courseId]
+    // Check if the progress record already exists in the `course_progress` table
+    const [[existingProgress]] = await db.query(
+      'SELECT progress_id FROM course_progress WHERE user_id = ? AND course_id = ?',
+      [userId, courseId]
     );
 
+    if (existingProgress) {
+      // If the record exists, update the progress and the last viewed section
+      await db.query(
+        'UPDATE course_progress SET progress = ?, last_viewed_section = ? WHERE user_id = ? AND course_id = ?',
+        [progress, lastViewedSection, userId, courseId]
+      );
+    } else {
+      // If the record doesn't exist, insert a new entry in `course_progress`
+      await db.query(
+        'INSERT INTO course_progress (user_id, course_id, progress, last_viewed_section) VALUES (?, ?, ?, ?)',
+        [userId, courseId, progress, lastViewedSection]
+      );
+    }
+
+    // Update the progress in the `enrollments` table
     await db.query(
-      'UPDATE course_progress SET progress = ? WHERE user_id = ? AND course_id = ?',
+      'UPDATE enrollments SET progress = ? WHERE user_id = ? AND course_id = ?',
       [progress, userId, courseId]
     );
 
@@ -687,10 +758,10 @@ router.post("/course/:courseId/update-progress", isAuthenticated, async (req, re
 
   } catch (err) {
     await db.query('ROLLBACK');
-    console.error("Error al actualizar el progreso:", err);
+    console.error("Error updating progress:", err);
     res.status(500).json({
       success: false,
-      message: 'Error al actualizar el progreso'
+      message: err.message
     });
   }
 });

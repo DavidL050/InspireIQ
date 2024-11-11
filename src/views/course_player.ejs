@@ -20,10 +20,10 @@
             <!-- Video Section -->
             <div class="col-md-9 player-video-section" id="videoSection">
                 <div class="player-video-wrapper position-relative">
-                    <% if (sections.length > 0 && sections[0].video_url) { %>
+                    <% if (sections.length > 0 && currentSectionVideoUrl) { %>
                         <iframe 
                             id="videoPlayer"
-                            src="<%= sections[0].video_url %>"
+                            src="<%= currentSectionVideoUrl %>"
                             title="Video del curso"
                             class="w-100"
                             frameborder="0"
@@ -167,13 +167,15 @@
                         <div class="player-accordion-item mb-2" data-section-id="<%= section.section_id %>">
                             <div class="player-section-header p-3 <%= index === 0 ? 'active-section' : '' %>">
                                 <button 
-                                    class="btn btn-link text-white text-decoration-none video-selector w-100 text-start d-flex align-items-center"
-                                    data-video-url="<%= section.video_url %>"
-                                    data-section-title="<%= section.title %>"
-                                    onclick="changeVideo(this)">
-                                    <i class="fas fa-play-circle me-2"></i>
-                                    <span><%= section.title %></span>
-                                </button>
+                                class="btn btn-link text-white text-decoration-none video-selector w-100 text-start d-flex align-items-center"
+                                data-video-url="<%= section.video_url %>"
+                                data-section-title="<%= section.title %>"
+                                data-section-index="<%= index %>"
+                                data-section-id="<%= section.section_id %>"
+                                onclick="changeVideo(this)">
+                                <i class="fas fa-play-circle me-2"></i>
+                                <span><%= section.title %></span>
+                            </button>
                             </div>
                         </div>
                     <% }); %>
@@ -184,56 +186,151 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const leaveReviewBtn = document.getElementById('leaveReviewBtn');
-            const reviewForm = document.getElementById('reviewForm');
-            const showSidebar = document.getElementById('showSidebar');
-            const closeSidebar = document.getElementById('closeSidebar');
-            const courseSidebar = document.getElementById('courseSidebar');
-
-            // Mostrar/ocultar el formulario de reseña
-            leaveReviewBtn.addEventListener('click', () => {
-                reviewForm.style.display = reviewForm.style.display === 'none' ? 'block' : 'none';
-            });
-
-            // Mostrar sidebar en móviles
-            showSidebar.addEventListener('click', () => {
-                courseSidebar.classList.add('show-sidebar');
-            });
-
-            // Ocultar sidebar en móviles
-            closeSidebar.addEventListener('click', () => {
-                courseSidebar.classList.remove('show-sidebar');
-            });
-        });
-        
-        // Cambiar el video al hacer clic en una sección
-        function changeVideo(button) {
-            const videoPlayer = document.getElementById('videoPlayer');
-            const sectionTitle = document.getElementById('currentSectionTitle');
+        let currentSectionIndex = 0;
+    
+        function loadNewPlayer(videoUrl) {
+            const videoIframe = document.getElementById('videoPlayer');
+    
+            if (!videoIframe) {
+                console.error("No se encontró el elemento del reproductor de video");
+                return;
+            }
+    
+            // Obtener la URL de embed transformada con soporte para tiempo de inicio
+            const embedUrl = transformYouTubeUrl(videoUrl);
+            if (!embedUrl) {
+                console.error("No se pudo transformar la URL del video:", videoUrl);
+                return;
+            }
+    
+            console.log("Cargando nuevo video en iframe con URL:", embedUrl);
+    
+            // Establecer la URL en el iframe directamente
+            videoIframe.src = embedUrl;
+        }
+    
+        window.changeVideo = function(button) {
             const newUrl = button.getAttribute('data-video-url');
             const newTitle = button.getAttribute('data-section-title');
-
-            videoPlayer.src = newUrl;
-            sectionTitle.textContent = `Sección: ${newTitle}`;
-            
-            // Remover clase activa de otras secciones y agregarla a la actual
-            document.querySelectorAll('.player-section-header').forEach(header => {
-                header.classList.remove('active-section');
-            });
+            const sectionIndex = button.getAttribute('data-section-index');
+            const sectionId = button.getAttribute('data-section-id');
+    
+            console.log("Cambio de sección a:", newTitle, "con URL de video:", newUrl);
+    
+            // Cargar el nuevo video en el iframe
+            loadNewPlayer(newUrl);
+            document.getElementById('currentSectionTitle').textContent = `Sección: ${newTitle}`;
+            updateProgress(sectionId);
+    
+            // Actualizar el índice actual de sección
+            currentSectionIndex = parseInt(sectionIndex);
+    
+            // Resalta la sección actual en el sidebar
+            document.querySelectorAll('.player-section-header').forEach(header => header.classList.remove('active-section'));
             button.parentElement.classList.add('active-section');
+        };
+    
+        function goToNextSection() {
+            const sections = <%- JSON.stringify(sections) %>;
+            currentSectionIndex++;
+    
+            if (currentSectionIndex < sections.length) {
+                const nextSection = sections[currentSectionIndex];
+                console.log("Reproduciendo siguiente sección:", nextSection.title);
+                document.getElementById('currentSectionTitle').textContent = `Sección: ${nextSection.title}`;
+                loadNewPlayer(nextSection.video_url);
+                updateProgress(nextSection.section_id);
+    
+                // Actualizar visualmente el sidebar
+                document.querySelectorAll('.player-section-header').forEach(header => header.classList.remove('active-section'));
+                document.querySelectorAll('.player-section-header')[currentSectionIndex].classList.add('active-section');
+            } else {
+                console.log("Has completado todas las secciones del curso.");
+            }
         }
-
-        // Ocultar mensajes flash después de 5 segundos
-        setTimeout(() => {
-            const flashMessages = document.querySelectorAll('.alert');
-            flashMessages.forEach(message => {
-                message.style.display = 'none';
+    
+        // Función para transformar URLs de YouTube a URLs embebidas con soporte para tiempo de inicio
+        function transformYouTubeUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                let videoId = '';
+                let startTime = '';
+    
+                if (urlObj.hostname === 'youtu.be') {
+                    videoId = urlObj.pathname.substring(1);
+                    startTime = urlObj.searchParams.get('t');
+                } else if (urlObj.hostname.includes('youtube.com')) {
+                    if (urlObj.pathname.includes('/embed/')) {
+                        videoId = urlObj.pathname.split('/embed/')[1];
+                        startTime = urlObj.searchParams.get('start');
+                    } else if (urlObj.searchParams.get('v')) {
+                        videoId = urlObj.searchParams.get('v');
+                        startTime = urlObj.searchParams.get('t');
+                    }
+                } else {
+                    console.error("Formato de URL no soportado:", url);
+                    return '';
+                }
+    
+                if (!videoId) {
+                    console.error("No se pudo extraer el ID del video de la URL:", url);
+                    return '';
+                }
+    
+                const startParam = startTime ? `?start=${convertYouTubeTimeToSeconds(startTime)}` : '';
+                return `https://www.youtube.com/embed/${videoId}${startParam}`;
+            } catch (e) {
+                console.error("Error transformando URL de YouTube:", e);
+                return '';
+            }
+        }
+    
+        function convertYouTubeTimeToSeconds(time) {
+            const match = time.match(/(\d+)(h|m|s)/g);
+            if (!match) return parseInt(time, 10);
+    
+            let seconds = 0;
+            match.forEach(part => {
+                const unit = part.slice(-1);
+                const amount = parseInt(part.slice(0, -1), 10);
+    
+                if (unit === 'h') seconds += amount * 3600;
+                if (unit === 'm') seconds += amount * 60;
+                if (unit === 's') seconds += amount;
             });
-        }, 5000);
+    
+            return seconds;
+        }
+    
+        function updateProgress(lastViewedSectionId) {
+            const totalSections = document.querySelectorAll('.player-section-header').length;
+            const completedSections = currentSectionIndex + 1;
+    
+            fetch(`/course/<%= course.course_id %>/update-progress`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    lastViewedSection: lastViewedSectionId,
+                    completedSections,
+                    totalSections
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Progreso actualizado:', data.progress);
+                } else {
+                    console.error('Error al actualizar el progreso:', data.message);
+                }
+            })
+            .catch(error => console.error('Error en la solicitud de progreso:', error));
+        }
     </script>
-
+    
     <%- include('partials/footer') %>
 </body>
 </html>

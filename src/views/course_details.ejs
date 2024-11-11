@@ -88,12 +88,18 @@
                     </div>
                     
                     <% if (!hasStarted) { %>
-                        <!-- Botón para inscribirse en el curso -->
-                        <button id="enrollButton" class="btn btn-primary course_details_btn_start">Comenzar curso</button>
+                        <% if (userRole === 'student') { %>
+                            <!-- Botón para inscribirse en el curso (solo para estudiantes) -->
+                            <button id="enrollButton" class="btn btn-primary course_details_btn_start">Comenzar curso</button>
+                        <% } else { %>
+                            <!-- Enlace para ingresar al curso sin inscripción para profesores u otros roles -->
+                            <a href="/course_player/<%= course.course_id %>" class="btn btn-primary course_details_btn_start">Comenzar curso</a>
+                        <% } %>
                     <% } else { %>
                         <!-- Enlace para continuar el curso -->
                         <a href="/course_player/<%= course.course_id %>" class="btn btn-primary course_details_btn_start">Continuar curso</a>
                     <% } %>
+                    
                 </aside>
             </div>
         </div>
@@ -110,30 +116,37 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.querySelector("#enrollButton")?.addEventListener("click", function(event) {
-            event.preventDefault();
 
-            fetch(`/course/<%= course.course_id %>/enroll`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Redirigir al usuario a la URL del curso
-                    window.location.href = data.redirectUrl;
-                } else {
-                    // Mostrar el mensaje de error
-                    alert(data.message);
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-            });
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const enrollButton = document.getElementById("enrollButton");
+    
+            // Solo ejecutar si el botón de inscripción existe
+            if (enrollButton) {
+                enrollButton.addEventListener("click", function(event) {
+                    event.preventDefault();
+    
+                    fetch(`/course/<%= course.course_id %>/enroll`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                    });
+                });
+            }
         });
     </script>
+    
 </body>
 </html>
