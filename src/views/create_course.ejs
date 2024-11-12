@@ -40,23 +40,29 @@
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         .mb-3 { margin-bottom: 0.75rem !important; }
-        textarea { min-height: 100px; resize: none; } /* Evita que el textarea de descripción se pueda redimensionar */
+        textarea { min-height: 100px; resize: none; } 
         
-        /* Estilo del botón de eliminar en la esquina */
+      
         .remove-btn {
-            background-color: transparent;
-            border: none;
-            color: #2802a5;
-            font-size: 1.2rem;
-            cursor: pointer;
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            transition: color 0.3s ease;
-        }
-        .remove-btn:hover {
-            color: #d62828;
-        }
+        background-color: #ff6b6b;
+        border: none;
+        color: white;
+        font-size: 0.8rem;
+        cursor: pointer;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        border-radius: 50%;
+        width: 15px;
+        height: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.3s ease;
+    }
+    .remove-btn:hover {
+        background-color: #d62828;
+    }
 
         /* Layout para pantallas grandes */
         @media (min-width: 992px) {
@@ -135,7 +141,7 @@
                     
                                     <div class="mb-3">
                                         <label class="floating-label required" for="description">Descripción</label>
-                                        <textarea class="form-control" id="description" name="description" required><%= course ? course.description : '' %></textarea>
+                                        <textarea class="form-control" id="description" name="description" maxlength="100" required><%= course ? course.description : '' %></textarea>
                                     </div>
                                 </div>
     
@@ -148,7 +154,7 @@
                                         <% if (sections && sections.length > 0) { %>
                                             <% sections.forEach((section, index) => { %>
                                                 <div class="section" id="section-<%= index %>">
-                                                    <input type="text" class="form-control mb-2" name="section_title[]" placeholder="Título de la sección" value="<%= section.title %>" required>
+                                                    <input type="text" class="form-control mb-2" name="section_title[]" placeholder="Título de la sección"  value="<%= section.title %>" maxlength="30" required>
                                                     <input type="url" class="form-control mb-2" name="video_url[]" placeholder="URL del video" value="<%= section.video_url %>" required>
                                                     <button type="button" class="remove-btn" onclick="removeSection(this)">
                                                         <i class="material-icons align-middle">close</i>
@@ -175,28 +181,30 @@
                             <div class="side-info">
                                 <div class="form-section">
                                     <div class="section-title">
-                                        <i class="material-icons">list</i>
-                                        Habilidades Necesarias
+                                      <i class="material-icons">list</i>
+                                      Habilidades Necesarias
                                     </div>
                                     <div id="requirements" class="mb-3">
-                                        <% if (skills && skills.length > 0) { %>
-                                            <% skills.forEach((skill, index) => { %>
-                                                <div class="requirement-item" id="skill-<%= index %>">
-                                                    <input type="text" class="form-control mb-2" name="requirements[]" placeholder="Agregar habilidad" value="<%= skill %>">
-                                                    <button type="button" class="remove-btn" onclick="removeRequirement(this)">
-                                                        <i class="material-icons align-middle">close</i>
-                                                    </button>
-                                                </div>
-                                            <% }); %>
-                                        <% } else { %>
-                                            <div class="requirement-item">
-                                                <input type="text" class="form-control mb-2" name="requirements[]" placeholder="Agregar habilidad">
-                                                <button type="button" class="remove-btn" onclick="removeRequirement(this)">
-                                                    <i class="material-icons align-middle">close</i>
-                                                </button>
-                                            </div>
-                                        <% } %>
+                                      <% if (skills && skills.length > 0) { %>
+                                        <% skills.forEach((skill, index) => { %>
+                                          <div class="requirement-item" id="skill-<%= index %>">
+                                            <input type="text" class="form-control mb-2" name="requirements[]" placeholder="Agregar habilidad" value="<%= skill %>">
+                                            <button type="button" class="remove-btn" onclick="removeRequirement(this)">
+                                              <i class="material-icons align-middle">close</i>
+                                            </button>
+                                          </div>
+                                        <% }); %>
+                                      <% } else { %>
+                                        <div class="requirement-item">
+                                          <input type="text" class="form-control mb-2" name="requirements[]" placeholder="Agregar habilidad">
+                                          <button type="button" class="remove-btn" onclick="removeRequirement(this)">
+                                            <i class="material-icons align-middle">close</i>
+                                          </button>
+                                        </div>
+                                      <% } %>
                                     </div>
+                                  </div>
+                                  
                                     <button type="button" class="btn btn-outline-secondary" onclick="addRequirement()">
                                         <i class="material-icons align-middle">add</i>
                                         Agregar habilidad
@@ -243,7 +251,7 @@
             const sectionDiv = document.createElement('div');
             sectionDiv.className = 'section';
             sectionDiv.innerHTML = `
-                <input type="text" class="form-control mb-2" name="section_title[]" placeholder="Título de la sección" required>
+                <input type="text" class="form-control mb-2" name="sections_title[]" placeholder="Título de la sección" maxlength="30" required>
                 <input type="url" class="form-control mb-2" name="video_url[]" placeholder="URL del video" required>
                 <button type="button" class="remove-btn" onclick="removeSection(this)">
                     <i class="material-icons align-middle">close</i>

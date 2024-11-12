@@ -114,17 +114,24 @@ router.get("/logout", async (req, res) => {
 // Página de perfil (requiere autenticación)
 router.get("/profile", isAuthenticated, async (req, res) => {
   try {
-    // Obtener información del usuario
-    const user = await getUserById(req.session.userId);
     
-    // Obtener progreso de los cursos en los que está inscrito
-    const coursesProgress = await db.query(`
-      SELECT c.name AS course_name, cp.progress, e.status
-      FROM enrollments e
-      JOIN courses c ON e.course_id = c.course_id
-      LEFT JOIN course_progress cp ON cp.user_id = e.user_id AND cp.course_id = e.course_id
-      WHERE e.user_id = ?
-    `, [req.session.userId]);
+    const user = await getUserById(req.session.userId);
+
+    
+    let coursesProgress = [];
+
+    
+    if (user.role === 'student') {
+      const [progress] = await db.query(`
+        SELECT c.name AS course_name, cp.progress, e.status
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.course_id
+        LEFT JOIN course_progress cp ON cp.user_id = e.user_id AND cp.course_id = e.course_id
+        WHERE e.user_id = ?
+      `, [req.session.userId]);
+      
+      coursesProgress = progress;  
+    }
 
     // Obtener enlaces sociales del usuario
     const userLinks = await getUserLinks(req.session.userId);
@@ -132,7 +139,7 @@ router.get("/profile", isAuthenticated, async (req, res) => {
     // Renderizar la vista 'profile.ejs' pasando todos los datos
     res.render("profile.ejs", { 
       user, 
-      coursesProgress: coursesProgress[0], 
+      coursesProgress,  // Pasar el array coursesProgress
       userLinks 
     });
   } catch (err) {
@@ -140,6 +147,7 @@ router.get("/profile", isAuthenticated, async (req, res) => {
     res.status(500).json({ error: 'Error en el servidor al obtener el perfil del usuario' });
   }
 });
+
 
 // Ruta para actualizar la foto de perfil
 router.post('/profile/upload-photo', isAuthenticated, upload.single('profilePhoto'), async (req, res) => {
@@ -236,7 +244,12 @@ router.post("/profile/delete-link", isAuthenticated, async (req, res) => {
 router.get("/course", isAuthenticated, async (req, res) => {
   try {
       // Obtener todos los cursos de la base de datos
-      const [courses] = await db.query('SELECT * FROM courses');
+      const [courses] = await db.query(`
+        SELECT c.*, cat.name AS category_name
+        FROM courses c
+        LEFT JOIN course_categories cc ON c.course_id = cc.course_id
+        LEFT JOIN categories cat ON cc.category_id = cat.category_id
+      `);
       
       // Pasar el ID del usuario actual para diferenciar si el usuario es el creador del curso
       const userId = req.session.userId;
@@ -254,12 +267,13 @@ router.get("/course", isAuthenticated, async (req, res) => {
 router.get("/create_course", isAuthenticated, async (req, res) => {
   try {
     const [categories] = await db.query('SELECT category_id, name FROM categories');
-    res.render("create_course.ejs", { course: null, categories }); // Pasar `course: null` para evitar errores en la vista
+    res.render("create_course.ejs", { course: null, categories, skills: [], sections: [] }); // Pasar `sections: []` para evitar errores en la vista
   } catch (err) {
     console.error("Error al cargar la página de creación de curso:", err);
     res.status(500).json({ error: 'Error en el servidor al cargar la página de creación de curso.' });
   }
 });
+
 // Crear un curso (requiere autenticación)
 router.post('/create_course', isAuthenticated, async (req, res) => {
   const { name, description, language, cover_image, category, requirements, section_title, video_url } = req.body;
@@ -268,18 +282,21 @@ router.post('/create_course', isAuthenticated, async (req, res) => {
   try {
     await db.query('START TRANSACTION');
     
+    // Insertar el curso
     const [result] = await db.query(
       'INSERT INTO courses (name, description, creation_date, creator_id, language, cover_image) VALUES (?, ?, NOW(), ?, ?, ?)',
       [name, description, creator_id, language, cover_image]
     );
 
-    const courseId = result.insertId || result[0]?.insertId;
+    const courseId = result.insertId;
     if (!courseId) throw new Error('Error al obtener el ID del curso insertado');
     
+    // Insertar la categoría del curso
     if (category) {
       await db.query('INSERT INTO course_categories (course_id, category_id) VALUES (?, ?)', [courseId, category]);
     }
     
+    // Insertar habilidades requeridas (requirements)
     if (requirements && Array.isArray(requirements)) {
       for (let requirement of requirements) {
         if (requirement.trim()) {
@@ -288,6 +305,7 @@ router.post('/create_course', isAuthenticated, async (req, res) => {
       }
     }
     
+    // Insertar secciones del curso
     if (section_title && video_url && Array.isArray(section_title) && Array.isArray(video_url)) {
       for (let i = 0; i < section_title.length; i++) {
         if (section_title[i].trim() && video_url[i].trim()) {
