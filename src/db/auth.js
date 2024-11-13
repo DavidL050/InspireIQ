@@ -42,12 +42,14 @@ async function loginUser(email, password, req) {
       throw new Error('Sesión no disponible');
     }
 
-    // Guardar el userId y userRole en la sesión
+    // Guardar el userId, userRole, firstName y profileImage en la sesión
     req.session.userId = user.user_id;
     req.session.userRole = user.role;
+    req.session.firstName = user.first_name; // Almacena el nombre del usuario en la sesión
+    req.session.profileImage = user.profile_image; // Almacena la foto de perfil en la sesión
+
     console.log("Sesión iniciada: userId =", req.session.userId, ", userRole =", req.session.userRole);
     
-
     await new Promise((resolve, reject) => {
       req.session.save(err => {
         if (err) return reject(new Error('Error al guardar la sesión'));
@@ -61,6 +63,7 @@ async function loginUser(email, password, req) {
     throw new Error('Error al iniciar sesión. Verifica tus credenciales e inténtalo de nuevo.');
   }
 }
+
 
 // Función para cerrar sesión
 function logoutUser(req) {

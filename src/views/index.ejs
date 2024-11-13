@@ -21,6 +21,15 @@
         <%- include('partials/navigation') %>
     </header>
 
+          <!-- Mensaje de bienvenida personalizado -->
+    <% if (firstName && profileImage) { %>
+        <div class="welcome-message">
+            <img src="<%= profileImage %>" alt="Foto de perfil" class="profile-image">
+            <p>¡Bienvenido(a), <strong><%= firstName %></strong>! Nos alegra verte de nuevo.</p>
+        </div>
+        <% } %>
+
+
     <div class="inspire-sections-container">
 
         <!-- Testimonios -->
@@ -206,6 +215,7 @@
         </div>
     </div>
 </div>
+
 
         <!-- Scripts -->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

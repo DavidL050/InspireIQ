@@ -149,36 +149,37 @@ $(document).ready(function() {
     });
 
     // Manejar el inicio de sesión
-    $('#signin-form').submit(function(e) {
-        e.preventDefault();
-        const formData = {
-            email: $('#signin-email').val(),
-            password: $('#signin-password').val()
-        };
+// Manejar el inicio de sesión
+$('#signin-form').submit(function(e) {
+    e.preventDefault();
+    const formData = {
+        email: $('#signin-email').val(),
+        password: $('#signin-password').val()
+    };
 
-        $.ajax({
-            url: '/signin',
-            method: 'POST',
-            data: formData,
-            success: function(response) {
-                showAlert('signinAlert', '¡Inicio de sesión exitoso!', 'success');
-                setTimeout(() => {
-                    const intendedUrl = sessionStorage.getItem('intendedUrl');
-                    if (intendedUrl) {
-                        sessionStorage.removeItem('intendedUrl');
-                        window.location.href = intendedUrl;
-                    } else {
-                        $('#signinModal').modal('hide');
-                        location.reload();
-                    }
-                }, 2000);
-            },
-            error: function(xhr) {
-                const errorMessage = xhr.responseJSON?.message || 'Error en el inicio de sesión. Por favor, verifica tus credenciales.';
-                showAlert('signinAlert', errorMessage, 'danger');
-            }
-        });
+    $.ajax({
+        url: '/signin',
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+            showAlert('signinAlert', '¡Inicio de sesión exitoso!', 'success');
+            setTimeout(() => {
+                const intendedUrl = sessionStorage.getItem('intendedUrl');
+                if (intendedUrl) {
+                    sessionStorage.removeItem('intendedUrl');
+                    window.location.href = intendedUrl;
+                } else {
+                    $('#signinModal').modal('hide');
+                    location.reload(); // Recarga la página para mostrar el mensaje de bienvenida
+                }
+            }, 2000);
+        },
+        error: function(xhr) {
+            const errorMessage = xhr.responseJSON?.message || 'Error en el inicio de sesión. Por favor, verifica tus credenciales.';
+            showAlert('signinAlert', errorMessage, 'danger');
+        }
     });
+});
 
     // Limpiar formularios y alertas al cerrar los modales
     $('#signupModal').on('hidden.bs.modal', function() {
@@ -199,3 +200,5 @@ $(document).ready(function() {
         $('#signinModal').modal('show');
     }
 });
+
+

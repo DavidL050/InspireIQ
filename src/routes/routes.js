@@ -42,6 +42,7 @@ function isAuthenticated(req, res, next) {
 
 // ---- RUTAS DE AUTENTICACIÓN ----
 
+
 // Página principal
 router.get("/", async (req, res) => {
   try {
@@ -52,7 +53,12 @@ router.get("/", async (req, res) => {
           LIMIT 3;
       `;
       const [courses] = await db.query(query);
-      res.render("index", { courses });
+
+      // Enviar el nombre y la imagen de perfil a la vista si el usuario ha iniciado sesión
+      const firstName = req.session.firstName || null;
+      const profileImage = req.session.profileImage || null;
+
+      res.render("index", { courses, firstName, profileImage });
   } catch (err) {
       console.error("Error al cargar la página principal:", err);
       req.flash('errorMessage', 'Hubo un error al cargar la página principal.');
@@ -89,15 +95,24 @@ router.post("/signup", async (req, res) => {
 });
 
 // Proceso de inicio de sesión
+// Proceso de inicio de sesión
 router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
   try {
     await loginUser(email, password, req);
-    res.status(200).json({ message: 'Inicio de sesión exitoso', redirect: '/' });
+    
+    // Envía los datos de sesión como respuesta
+    res.status(200).json({
+      message: 'Inicio de sesión exitoso',
+      redirect: '/',
+      firstName: req.session.firstName,
+      profileImage: req.session.profileImage
+    });
   } catch (err) {
     res.status(401).json({ error: err.message });
   }
 });
+
 
 // Cerrar sesión
 router.get("/logout", async (req, res) => {
