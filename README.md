@@ -1,3 +1,8 @@
+# InspireIQ
+
+Aplicación desplegada en [Heroku](https://powerful-reaches-88252-6de08b7a6239.herokuapp.com)]
+Base de Datos desplegada en Railway
+
 # InspireIQ - Plataforma de Aprendizaje Digital
 
 [![Node.js](https://img.shields.io/badge/Node.js-v18.x-brightgreen)]()
