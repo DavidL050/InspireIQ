@@ -1,5 +1,5 @@
 // auth.js
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import db from './database.js';
 
 // Función para registrar un nuevo usuario

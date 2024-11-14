@@ -11,8 +11,10 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
-    "-": "^0.0.1",
     "bcryptjs": "^2.4.3",
     "bootstrap": "^5.3.3",
     "connect-flash": "^0.1.1",
