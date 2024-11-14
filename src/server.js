@@ -8,8 +8,6 @@ import indexRoutes from './routes/routes.js';
 import path from 'path';
 const app = express();
 
-// Configuración de express-session
-import session from 'express-session';
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'my_temporary_secret_key',
