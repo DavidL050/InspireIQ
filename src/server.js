@@ -9,16 +9,18 @@ import path from 'path';
 const app = express();
 
 // Configuración de express-session
+import session from 'express-session';
+
 app.use(session({
-  secret: 'tusecretoestáasalvo', // Cambia esto por una cadena secreta larga y aleatoria
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production', // Usa true en producción con HTTPS
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 horas
+  secret: process.env.SESSION_SECRET || 'my_temporary_secret_key',
+  resave: false, 
+  saveUninitialized: true, 
+  cookie: {
+    secure: false, // Asegúrate de que esté en false en Heroku si no tienes SSL configurado
+    maxAge: 60 * 60 * 1000 // 1 hora de duración de la sesión
   }
 }));
+
 
 
 const storage = multer.diskStorage({
